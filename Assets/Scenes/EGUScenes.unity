@@ -210,6 +210,21 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &349638405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349638394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb822b7786e9504ba85ac6aab05cf39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentLevel: 1
+  currentExp: 0
+  expToNextLevel: 100
 --- !u!1 &464060033
 GameObject:
   m_ObjectHideFlags: 0
@@ -529,8 +544,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefab: {fileID: 2172488294482382104, guid: 6c99c41402ee05045afd5f9b74281114, type: 3}
-  spawnInterval: 2
+  baseSpawnInterval: 2
+  minSpawnInterval: 0.3
   spawnOffset: 2
+  difficultyIncreaseTimer: 7
+  decreaseAmount: 0.15
+  fftMultiplier: 1
 --- !u!4 &1189501866
 Transform:
   m_ObjectHideFlags: 0
@@ -733,6 +752,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 181780618870576679, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
       insertIndex: -1
       addedObject: {fileID: 349638402}
+    - targetCorrespondingSourceObject: {fileID: 181780618870576679, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 349638405}
   m_SourcePrefab: {fileID: 100100000, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

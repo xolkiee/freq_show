@@ -2,8 +2,11 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour
 {
-    public int maxHealth = 3; // 3 mermide ölsün
+    public int maxHealth = 3;
     private int currentHealth;
+
+    // YENİ: Düşmanın yere bırakacağı taşın şablonu
+    public GameObject expGemPrefab; 
 
     void Start()
     {
@@ -14,8 +17,6 @@ public class EnemyHealth : MonoBehaviour
     {
         currentHealth -= damage;
         
-        // İleride buraya vurulma anında beyazlama (Flash) efekti koyacağız
-        
         if (currentHealth <= 0)
         {
             Die();
@@ -24,7 +25,12 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
-        // İleride patlama partikülü ve kan lekesi burada oluşacak
+        // YENİ: Ölmeden hemen önce kendi bulunduğu kordinata EXP taşını yarat!
+        if (expGemPrefab != null)
+        {
+            Instantiate(expGemPrefab, transform.position, Quaternion.identity);
+        }
+
         Destroy(gameObject); 
     }
 }
