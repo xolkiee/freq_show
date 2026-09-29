@@ -1,21 +1,21 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem; // Yeni Input Sistemi kütüphanesi
+using UnityEngine.InputSystem; // Yeni Input Sistemi kï¿½tï¿½phanesi
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Hareket Ayarlarý")]
+    [Header("Hareket Ayarlarï¿½")]
     public float moveSpeed = 6f;
     private Vector2 moveInput;
 
-    [Header("Dodge (Dash) Ayarlarý")]
+    [Header("Dodge (Dash) Ayarlarï¿½")]
     public float dashSpeed = 20f;
     public float dashDuration = 0.15f;
     public float dashCooldown = 1f;
-    private bool isDashing;
+    [HideInInspector] public bool isDashing;
     private float dashTimer;
 
-    [Header("Bileþenler")]
+    [Header("Bileï¿½enler")]
     private Rigidbody2D rb;
     private Camera mainCamera;
     private Vector2 mousePosition;
@@ -28,10 +28,10 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Eðer dash atýyorsak baþka bir girdi almasýný engelliyoruz
+        // Eï¿½er dash atï¿½yorsak baï¿½ka bir girdi almasï¿½nï¿½ engelliyoruz
         if (isDashing) return;
 
-        // 1. HAREKET GÝRDÝSÝ (WASD) - Geçici olarak direkt klavyeden okuyoruz, co-op yaparken PlayerInput'a baðlayacaðýz
+        // 1. HAREKET Gï¿½RDï¿½Sï¿½ (WASD) - Geï¿½ici olarak direkt klavyeden okuyoruz, co-op yaparken PlayerInput'a baï¿½layacaï¿½ï¿½z
         moveInput = Vector2.zero;
         if (Keyboard.current != null)
         {
@@ -41,53 +41,53 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.dKey.isPressed) moveInput.x += 1;
         }
 
-        // 2. NÝÞAN ALMA GÝRDÝSÝ (Mouse Konumu)
+        // 2. Nï¿½ï¿½AN ALMA Gï¿½RDï¿½Sï¿½ (Mouse Konumu)
         if (Mouse.current != null)
         {
             mousePosition = mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         }
 
-        // 3. DODGE GÝRDÝSÝ (Space Tuþu)
+        // 3. DODGE Gï¿½RDï¿½Sï¿½ (Space Tuï¿½u)
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && dashTimer <= 0)
         {
             StartCoroutine(DashRoutine());
         }
 
-        // Dash bekleme süresini (Cooldown) say
+        // Dash bekleme sï¿½resini (Cooldown) say
         if (dashTimer > 0) dashTimer -= Time.deltaTime;
     }
 
     void FixedUpdate()
     {
-        // Dash atarken fizik motoruna müdahale etmiyoruz
+        // Dash atarken fizik motoruna mï¿½dahale etmiyoruz
         if (isDashing) return;
 
-        // Karakteri yürüt (Vektörü normalize ediyoruz ki çapraz giderken 2 kat hýzlanmasýn)
+        // Karakteri yï¿½rï¿½t (Vektï¿½rï¿½ normalize ediyoruz ki ï¿½apraz giderken 2 kat hï¿½zlanmasï¿½n)
         rb.velocity = moveInput.normalized * moveSpeed;
 
-        // Karakteri Mouse imlecine doðru döndür (Twin-Stick mantýðý)
+        // Karakteri Mouse imlecine doï¿½ru dï¿½ndï¿½r (Twin-Stick mantï¿½ï¿½ï¿½)
         Vector2 aimDirection = mousePosition - rb.position;
-        float aimAngle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg - 90f; // Yüzünü farenin olduðu yere dönmesi için -90 derece ofset
+        float aimAngle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg - 90f; // Yï¿½zï¿½nï¿½ farenin olduï¿½u yere dï¿½nmesi iï¿½in -90 derece ofset
         rb.rotation = aimAngle;
     }
 
-    // Dodge (Dash) Mekaniðini yöneten asenkron fonksiyon
+    // Dodge (Dash) Mekaniï¿½ini yï¿½neten asenkron fonksiyon
     private IEnumerator DashRoutine()
     {
-        isDashing = true; // Hareketi ve yeni inputlarý kilitler
-        dashTimer = dashCooldown; // Cooldown'ý baþlatýr
+        isDashing = true; // Hareketi ve yeni inputlarï¿½ kilitler
+        dashTimer = dashCooldown; // Cooldown'ï¿½ baï¿½latï¿½r
 
-        // Ýleride buraya i-frames (yenilmezlik) kodunu ve partikül efektini ekleyeceðiz
+        // ï¿½leride buraya i-frames (yenilmezlik) kodunu ve partikï¿½l efektini ekleyeceï¿½iz
 
-        // Karakteri mevcut yönünde anlýk olarak çok yüksek bir hýza ulaþtýrýr
+        // Karakteri mevcut yï¿½nï¿½nde anlï¿½k olarak ï¿½ok yï¿½ksek bir hï¿½za ulaï¿½tï¿½rï¿½r
         if (moveInput != Vector2.zero)
             rb.velocity = moveInput.normalized * dashSpeed;
         else
-            rb.velocity = transform.up * dashSpeed; // Durduðu yerde basarsa baktýðý yöne atýlýr
+            rb.velocity = transform.up * dashSpeed; // Durduï¿½u yerde basarsa baktï¿½ï¿½ï¿½ yï¿½ne atï¿½lï¿½r
 
-        // Dash süresi kadar bekle (0.15 saniye)
+        // Dash sï¿½resi kadar bekle (0.15 saniye)
         yield return new WaitForSeconds(dashDuration);
 
-        isDashing = false; // Kilitleri aç
+        isDashing = false; // Kilitleri aï¿½
     }
 }
