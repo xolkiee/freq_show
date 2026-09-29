@@ -26,11 +26,23 @@ public class Bullet : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D hitInfo)
     {
-        // Şimdilik sadece duvarlara çarpınca yok olmasını sağlayalım.
-        // İleride buraya "Enemy" tag'i de ekleyeceğiz.
-        if(hitInfo.CompareTag("Environment")) // (Haritanın sınırlarına Environment tag'i verebilirsin)
+        // 1. Eğer çarptığımız şeyin etiketi "Enemy" ise
+        if (hitInfo.CompareTag("Enemy"))
         {
-            CancelInvoke("Deactivate"); // Çarptığı için süreyi beklemesine gerek kalmadı
+            // Düşmanın can kodunu bul
+            EnemyHealth enemy = hitInfo.GetComponent<EnemyHealth>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(1); // 1 Hasar ver
+            }
+            
+            CancelInvoke("Deactivate");
+            Deactivate(); // Mermiyi yok et (Havuza geri gönder)
+        }
+        // 2. Eğer duvara (Environment) çarptıysa sadece mermiyi yok et
+        else if (hitInfo.CompareTag("Environment"))
+        {
+            CancelInvoke("Deactivate");
             Deactivate();
         }
     }
