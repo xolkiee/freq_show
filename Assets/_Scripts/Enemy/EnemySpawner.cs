@@ -6,7 +6,7 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemyPrefab;
     public float baseSpawnInterval = 2f;   // Başlangıç hızı
     public float minSpawnInterval = 0.3f;  // Düşebileceği en düşük hız (Oyun çökmesin diye)
-    public float spawnOffset = 2f;
+    public float spawnOffset = 2f; // Kameranın sınırından ne kadar dışarıda doğsunlar?
 
     [Header("Zorluk (Escalating Chaos) Ayarları")]
     public float difficultyIncreaseTimer = 10f; // Kaç saniyede bir oyun zorlaşacak?
@@ -72,17 +72,27 @@ public class EnemySpawner : MonoBehaviour
         float camWidth = camHeight * mainCam.aspect;
         Vector2 camPos = mainCam.transform.position;
 
+        // Düşmanın çıkacağı rastgele bir kenar seç (0 = Üst, 1 = Alt, 2 = Sağ, 3 = Sol)
         int edge = Random.Range(0, 4);
         Vector2 spawnPosition = Vector2.zero;
 
         switch (edge)
         {
-            case 0: spawnPosition = new Vector2(Random.Range(camPos.x - camWidth, camPos.x + camWidth), camPos.y + camHeight + spawnOffset); break;
-            case 1: spawnPosition = new Vector2(Random.Range(camPos.x - camWidth, camPos.x + camWidth), camPos.y - camHeight - spawnOffset); break;
-            case 2: spawnPosition = new Vector2(camPos.x + camWidth + spawnOffset, Random.Range(camPos.y - camHeight, camPos.y + camHeight)); break;
-            case 3: spawnPosition = new Vector2(camPos.x - camWidth - spawnOffset, Random.Range(camPos.y - camHeight, camPos.y + camHeight)); break;
+            case 0: // Üstten gelsin
+                spawnPosition = new Vector2(Random.Range(camPos.x - camWidth, camPos.x + camWidth), camPos.y + camHeight + spawnOffset);
+                break;
+            case 1: // Alttan gelsin
+                spawnPosition = new Vector2(Random.Range(camPos.x - camWidth, camPos.x + camWidth), camPos.y - camHeight - spawnOffset);
+                break;
+            case 2: // Sağdan gelsin
+                spawnPosition = new Vector2(camPos.x + camWidth + spawnOffset, Random.Range(camPos.y - camHeight, camPos.y + camHeight));
+                break;
+            case 3: // Soldan gelsin
+                spawnPosition = new Vector2(camPos.x - camWidth - spawnOffset, Random.Range(camPos.y - camHeight, camPos.y + camHeight));
+                break;
         }
 
+        // Hesaplanıp seçilen o görünmez noktada düşmanı yarat!
         Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
     }
 }
