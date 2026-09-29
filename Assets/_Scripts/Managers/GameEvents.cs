@@ -29,4 +29,17 @@ public static class GameEvents
     {
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
+    // --- MÜZÝK VE RÝTÝM KANALLARI ---
+
+    // Kick (Darbe) Kanalý
+    public static event Action OnKickHit;
+    public static void TriggerKickHit() => OnKickHit?.Invoke();
+
+    // Hi-Hat (Hýz/Kaos) Kanalý
+    public static event Action OnHiHatHit;
+    public static void TriggerHiHatHit() => OnHiHatHit?.Invoke();
+
+    // Sub-Bass (Atmosfer/Basýnç) Kanalý - Ýçinde þiddet verisi taþýr
+    public static event Action<float> OnSubIntensity;
+    public static void TriggerSubIntensity(float intensity) => OnSubIntensity?.Invoke(intensity);
 }
