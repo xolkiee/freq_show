@@ -1,37 +1,43 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem; // Yeni Input Sistemi k�t�phanesi
+using UnityEngine.InputSystem; // Yeni Input Sistemi kütüphanesi
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Hareket Ayarlar�")]
+    [Header("Hareket Ayarları")]
     public float moveSpeed = 6f;
     private Vector2 moveInput;
 
-    [Header("Dodge (Dash) Ayarlar�")]
+    [Header("Dodge (Dash) Ayarları")]
     public float dashSpeed = 20f;
     public float dashDuration = 0.15f;
     public float dashCooldown = 1f;
     [HideInInspector] public bool isDashing;
     private float dashTimer;
 
-    [Header("Bile�enler")]
+    [Header("Bileşenler")]
     private Rigidbody2D rb;
     private Camera mainCamera;
     private Vector2 mousePosition;
+
+    // --- YENİ EKLENEN: Orijinal katman hafızası ---
+    private int originalLayer;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         mainCamera = Camera.main;
+
+        // Oyun başladığında oyuncunun varsayılan fizik katmanını kaydet
+        originalLayer = gameObject.layer;
     }
 
     void Update()
     {
-        // E�er dash at�yorsak ba�ka bir girdi almas�n� engelliyoruz
+        // Eğer dash atıyorsak başka bir girdi almasını engelliyoruz
         if (isDashing) return;
 
-        // 1. HAREKET G�RD�S� (WASD) - Ge�ici olarak direkt klavyeden okuyoruz, co-op yaparken PlayerInput'a ba�layaca��z
+        // 1. HAREKET GİRDİSİ (WASD) - Geçici olarak direkt klavyeden okuyoruz, co-op yaparken PlayerInput'a bağlayacağız
         moveInput = Vector2.zero;
         if (Keyboard.current != null)
         {
@@ -41,53 +47,57 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.dKey.isPressed) moveInput.x += 1;
         }
 
-        // 2. N��AN ALMA G�RD�S� (Mouse Konumu)
+        // 2. NİŞAN ALMA GİRDİSİ (Mouse Konumu)
         if (Mouse.current != null)
         {
             mousePosition = mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         }
 
-        // 3. DODGE G�RD�S� (Space Tu�u)
+        // 3. DODGE GİRDİSİ (Space Tuşu)
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && dashTimer <= 0)
         {
             StartCoroutine(DashRoutine());
         }
 
-        // Dash bekleme s�resini (Cooldown) say
+        // Dash bekleme süresini (Cooldown) say
         if (dashTimer > 0) dashTimer -= Time.deltaTime;
     }
 
     void FixedUpdate()
     {
-        // Dash atarken fizik motoruna m�dahale etmiyoruz
+        // Dash atarken fizik motoruna müdahale etmiyoruz
         if (isDashing) return;
 
-        // Karakteri y�r�t (Vekt�r� normalize ediyoruz ki �apraz giderken 2 kat h�zlanmas�n)
+        // Karakteri yürüt (Vektörü normalize ediyoruz ki çapraz giderken 2 kat hızlanmasın)
         rb.velocity = moveInput.normalized * moveSpeed;
 
-        // Karakteri Mouse imlecine do�ru d�nd�r (Twin-Stick mant���)
+        // Karakteri Mouse imlecine doğru döndür (Twin-Stick mantığı)
         Vector2 aimDirection = mousePosition - rb.position;
-        float aimAngle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg - 90f; // Y�z�n� farenin oldu�u yere d�nmesi i�in -90 derece ofset
+        float aimAngle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg - 90f; // Yüzünü farenin olduğu yere dönmesi için -90 derece ofset
         rb.rotation = aimAngle;
     }
 
-    // Dodge (Dash) Mekani�ini y�neten asenkron fonksiyon
+    // Dodge (Dash) Mekaniğini yöneten asenkron fonksiyon
     private IEnumerator DashRoutine()
     {
-        isDashing = true; // Hareketi ve yeni inputlar� kilitler
-        dashTimer = dashCooldown; // Cooldown'� ba�lat�r
+        isDashing = true; // Hareketi ve yeni inputları kilitler
+        dashTimer = dashCooldown; // Cooldown'ı başlatır
 
-        // �leride buraya i-frames (yenilmezlik) kodunu ve partik�l efektini ekleyece�iz
+        // --- I-FRAME BAŞLANGICI: Karakteri mermilerin içinden geçeceği hayalet katmana al ---
+        gameObject.layer = LayerMask.NameToLayer("PlayerDodge");
 
-        // Karakteri mevcut y�n�nde anl�k olarak �ok y�ksek bir h�za ula�t�r�r
+        // Karakteri mevcut yönünde anlık olarak çok yüksek bir hıza ulaştırır
         if (moveInput != Vector2.zero)
             rb.velocity = moveInput.normalized * dashSpeed;
         else
-            rb.velocity = transform.up * dashSpeed; // Durdu�u yerde basarsa bakt��� y�ne at�l�r
+            rb.velocity = transform.up * dashSpeed; // Durduğu yerde basarsa baktığı yöne atılır
 
-        // Dash s�resi kadar bekle (0.15 saniye)
+        // Dash süresi kadar bekle (0.15 saniye)
         yield return new WaitForSeconds(dashDuration);
 
-        isDashing = false; // Kilitleri a�
+        // --- I-FRAME BİTİŞİ: Karakteri orijinal (vurulabilir) katmanına geri döndür ---
+        gameObject.layer = originalLayer;
+
+        isDashing = false; // Kilitleri aç
     }
 }

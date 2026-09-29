@@ -4,21 +4,34 @@ public class EnemySpawner : MonoBehaviour
 {
     [Header("Temel Üretim Ayarları")]
     public GameObject enemyPrefab;
-    public float baseSpawnInterval = 2f;   // Başlangıç hızı
-    public float minSpawnInterval = 0.3f;  // Düşebileceği en düşük hız (Oyun çökmesin diye)
-    public float spawnOffset = 2f; // Kameranın sınırından ne kadar dışarıda doğsunlar?
+    public float baseSpawnInterval = 2f;
+    public float minSpawnInterval = 0.3f;
+    public float spawnOffset = 2f;
 
     [Header("Zorluk (Escalating Chaos) Ayarları")]
-    public float difficultyIncreaseTimer = 10f; // Kaç saniyede bir oyun zorlaşacak?
-    public float decreaseAmount = 0.15f;        // Her zorlaştığında süre ne kadar kısalacak?
+    public float difficultyIncreaseTimer = 10f;
+    public float decreaseAmount = 0.15f;
 
     [Header("FFT (Müzik) Bağlantısı")]
-    [Tooltip("Furkan'ın FFT kodu bas vurduğunda bu değeri düşürüp ritme göre düşman attıracak")]
-    public float fftMultiplier = 1f; // 1 = Normal hız. Bas vurduğunda Furkan bunu 0.1 falan yapacak.
+    [Tooltip("Sub-bass şiddetine göre bu çarpan düşer, süre kısalır ve oyun hızlanır.")]
+    public float fftMultiplier = 1f;
 
     private float nextSpawnTime;
     private float nextDifficultyIncrease;
     private Camera mainCam;
+
+    void OnEnable()
+    {
+        // FURKAN'IN RADYOSUNA BAĞLANTI:
+        GameEvents.OnKickHit += SpawnEnemyOutsideCamera; // Kick vurduğunda anında fırlat
+        GameEvents.OnSubIntensity += AdjustMultiplier;   // Sub-bass şiddetine göre hızı katla
+    }
+
+    void OnDisable()
+    {
+        GameEvents.OnKickHit -= SpawnEnemyOutsideCamera;
+        GameEvents.OnSubIntensity -= AdjustMultiplier;
+    }
 
     void Start()
     {
@@ -29,14 +42,14 @@ public class EnemySpawner : MonoBehaviour
 
     void Update()
     {
-        // 1. DİNAMİK ZORLUK: Süre doldukça base süreyi kısalt (Oyun kendi kendine zorlaşsın)
+        // 1. DİNAMİK ZORLUK (Zamanla kendiliğinden hızlanma)
         if (Time.time >= nextDifficultyIncrease)
         {
             IncreaseDifficulty();
             nextDifficultyIncrease = Time.time + difficultyIncreaseTimer;
         }
 
-        // 2. ÜRETİM: Zamanı geldikçe düşman fırlat
+        // 2. TEMEL ÜRETİM (Müzik dursa bile oyun boş kalmasın diye baseline)
         if (Time.time >= nextSpawnTime)
         {
             SpawnEnemyOutsideCamera();
@@ -44,55 +57,48 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+    // FFT KANCASI 1: Sub-bass şiddeti arttıkça çarpan küçülür (0.2'ye kadar düşebilir)
+    private void AdjustMultiplier(float intensity)
+    {
+        // Intensity 0 ile 100 arası geliyor (örneğin 20 şiddetinde vurduysa çarpan 0.8 olur)
+        fftMultiplier = Mathf.Clamp(1f - (intensity / 100f), 0.2f, 1f);
+    }
+
     void IncreaseDifficulty()
     {
-        // Spawner hızını arttır ama minimum sınırdan daha aşağı inmesine izin verme
         if (baseSpawnInterval > minSpawnInterval)
         {
             baseSpawnInterval -= decreaseAmount;
             baseSpawnInterval = Mathf.Max(baseSpawnInterval, minSpawnInterval);
-            Debug.Log("Oyun Zorlaştı! Yeni normal düşman gelme süresi: " + baseSpawnInterval);
         }
     }
 
-    // FFT KANCASI BURASI: Üretim hızını belirleyen nihai matematik
+    // FFT KANCASI 2: Üretim hızını belirleyen nihai matematik
     public float GetCurrentSpawnInterval()
     {
-        // Temel üretim hızı ile müziğin ritmini çarpıyoruz. 
-        // İleride Furkan FFT'den gelen şiddeti "fftMultiplier" değişkenine eşitleyecek.
         float finalInterval = baseSpawnInterval * fftMultiplier;
-        
-        // Ritme göre mermiler çok hızlansa bile 0.05 saniyenin altına düşmesin (Güvenlik)
-        return Mathf.Max(finalInterval, 0.05f); 
+        return Mathf.Max(finalInterval, 0.05f);
     }
 
     void SpawnEnemyOutsideCamera()
     {
+        if (mainCam == null) return;
+
         float camHeight = mainCam.orthographicSize;
         float camWidth = camHeight * mainCam.aspect;
         Vector2 camPos = mainCam.transform.position;
 
-        // Düşmanın çıkacağı rastgele bir kenar seç (0 = Üst, 1 = Alt, 2 = Sağ, 3 = Sol)
         int edge = Random.Range(0, 4);
         Vector2 spawnPosition = Vector2.zero;
 
         switch (edge)
         {
-            case 0: // Üstten gelsin
-                spawnPosition = new Vector2(Random.Range(camPos.x - camWidth, camPos.x + camWidth), camPos.y + camHeight + spawnOffset);
-                break;
-            case 1: // Alttan gelsin
-                spawnPosition = new Vector2(Random.Range(camPos.x - camWidth, camPos.x + camWidth), camPos.y - camHeight - spawnOffset);
-                break;
-            case 2: // Sağdan gelsin
-                spawnPosition = new Vector2(camPos.x + camWidth + spawnOffset, Random.Range(camPos.y - camHeight, camPos.y + camHeight));
-                break;
-            case 3: // Soldan gelsin
-                spawnPosition = new Vector2(camPos.x - camWidth - spawnOffset, Random.Range(camPos.y - camHeight, camPos.y + camHeight));
-                break;
+            case 0: spawnPosition = new Vector2(Random.Range(camPos.x - camWidth, camPos.x + camWidth), camPos.y + camHeight + spawnOffset); break;
+            case 1: spawnPosition = new Vector2(Random.Range(camPos.x - camWidth, camPos.x + camWidth), camPos.y - camHeight - spawnOffset); break;
+            case 2: spawnPosition = new Vector2(camPos.x + camWidth + spawnOffset, Random.Range(camPos.y - camHeight, camPos.y + camHeight)); break;
+            case 3: spawnPosition = new Vector2(camPos.x - camWidth - spawnOffset, Random.Range(camPos.y - camHeight, camPos.y + camHeight)); break;
         }
 
-        // Hesaplanıp seçilen o görünmez noktada düşmanı yarat!
         Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
     }
 }
