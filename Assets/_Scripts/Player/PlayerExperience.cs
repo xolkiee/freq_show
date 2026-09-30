@@ -1,24 +1,34 @@
 using UnityEngine;
+using UnityEngine.InputSystem; // Furkan'ın yeni Input sistemi için gerekli
 
 public class PlayerExperience : MonoBehaviour
 {
-    [Header("Seviye Sistemi")]
     public int currentLevel = 1;
     public int currentExp = 0;
-    public int expToNextLevel = 100; // İlk seviyeyi geçmek için 100 exp (10 düşman) gereksin
-    public LevelUpManager levelUpManager;
+    public int expToNextLevel = 100;
 
-    // Yerdeki EXP taşı oyuncunun (Player_1) Trigger'ına değdiğinde çalışır
+    // Oyuncunun kimliği (0 veya 1)
+    private int playerIndex;
+
+    void Start()
+    {
+        // Furkan'ın PlayerInput bileşeninden bu karakterin kim olduğunu (Player 0 mı 1 mi) öğreniyoruz
+        PlayerInput pInput = GetComponent<PlayerInput>();
+        if (pInput != null)
+        {
+            playerIndex = pInput.playerIndex;
+        }
+    }
+
     void OnTriggerEnter2D(Collider2D col)
     {
         if (col.CompareTag("ExpGem"))
         {
-            // Taştaki değeri al
             ExpGem gem = col.GetComponent<ExpGem>();
             if (gem != null)
             {
                 AddExp(gem.expValue);
-                Destroy(col.gameObject); // Topladığımız taşı sahneden sil
+                Destroy(col.gameObject);
             }
         }
     }
@@ -26,9 +36,9 @@ public class PlayerExperience : MonoBehaviour
     void AddExp(int amount)
     {
         currentExp += amount;
-        Debug.Log("EXP Toplandı! Mevcut EXP: " + currentExp + "/" + expToNextLevel);
+        // Kimin exp topladığını konsolda net görebilirsin
+        Debug.Log("Player " + playerIndex + " EXP Topladı: " + currentExp + "/" + expToNextLevel);
 
-        // Seviye atlama kontrolü
         if (currentExp >= expToNextLevel)
         {
             LevelUp();
@@ -38,16 +48,15 @@ public class PlayerExperience : MonoBehaviour
     void LevelUp()
     {
         currentLevel++;
-        currentExp -= expToNextLevel; // Fazlalık EXP'yi bir sonraki seviyeye devret
-        
-        // Her seviyede bir sonraki seviyenin zorluğunu 1.5 kat arttır
-        expToNextLevel = Mathf.RoundToInt(expToNextLevel * 1.5f); 
+        currentExp -= expToNextLevel;
+        expToNextLevel = Mathf.RoundToInt(expToNextLevel * 1.5f);
 
-        Debug.Log("LEVEL UP! Yeni Seviyen: " + currentLevel + " | Sonraki hedef: " + expToNextLevel);
-        
-        if(levelUpManager != null)
+        Debug.Log("Player " + playerIndex + " LEVEL ATLADI!");
+
+        // YENİ: Sahnedeki UI yöneticisini bul ve KENDİNİ (this.gameObject) oraya gönder
+        if (LevelUpManager.Instance != null)
         {
-            levelUpManager.ShowLevelUpScreen();
+            LevelUpManager.Instance.ShowLevelUpScreen(this.gameObject);
         }
     }
 }

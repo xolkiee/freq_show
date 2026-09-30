@@ -144,3 +144,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   expValue: 10
+  magnetRadius: 4
+  moveSpeed: 8

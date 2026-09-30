@@ -163,6 +163,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   currentHealth: 100
+  myPlayerIndex: 0
 --- !u!114 &5140913230528560775
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -255,7 +256,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentLevel: 1
   currentExp: 0
-  expToNextLevel: 100
+  expToNextLevel: 10
+  levelUpManager: {fileID: 0}
 --- !u!1 &1680780597946832986
 GameObject:
   m_ObjectHideFlags: 0
