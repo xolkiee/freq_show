@@ -6,6 +6,7 @@ public class PlayerExperience : MonoBehaviour
     public int currentLevel = 1;
     public int currentExp = 0;
     public int expToNextLevel = 100; // İlk seviyeyi geçmek için 100 exp (10 düşman) gereksin
+    public LevelUpManager levelUpManager;
 
     // Yerdeki EXP taşı oyuncunun (Player_1) Trigger'ına değdiğinde çalışır
     void OnTriggerEnter2D(Collider2D col)
@@ -44,6 +45,9 @@ public class PlayerExperience : MonoBehaviour
 
         Debug.Log("LEVEL UP! Yeni Seviyen: " + currentLevel + " | Sonraki hedef: " + expToNextLevel);
         
-        // Furkan UI yapınca buraya "Yetenek Seçme Ekranını Aç" kodunu bağlayacağız!
+        if(levelUpManager != null)
+        {
+            levelUpManager.ShowLevelUpScreen();
+        }
     }
 }
