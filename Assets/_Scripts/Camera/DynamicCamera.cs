@@ -5,7 +5,8 @@ using UnityEngine;
 public class DynamicCamera : MonoBehaviour
 {
     [Header("Takip Edilecek Hedefler")]
-    public List<Transform> targets;
+    // Artýk bu listeyi Inspector'dan doldurmana gerek yok, kod kendi bulacak
+    public List<Transform> targets = new List<Transform>();
 
     [Header("Kamera Hareket Ayarlarý")]
     public Vector3 offset = new Vector3(0f, 0f, -10f);
@@ -14,17 +15,16 @@ public class DynamicCamera : MonoBehaviour
 
     [Header("Zoom (Orthographic Size) Ayarlarý")]
     public float minZoom = 7f;  // Tek oyunculuda veya yan yanayken ne kadar yakýnlaþsýn
-    public float maxZoom = 9f;  // CO-OP ÝÇÝN KESÝN SINIR: Ne kadar uzaklaþýrlarsa uzaklaþsýnlar bu boyutu geçemez
-    public float zoomLimiter = 12f;
+    public float maxZoom = 9f;  // CO-OP ÝÇÝN KESÝN SINIR: En fazla ne kadar uzaklaþsýn
+    public float zoomLimiter = 12f; // Karakterler ne kadar uzaklaþýnca maxZoom devreye girsin
 
     [Header("Harita Sýnýrlarý (Dýþarýyý Göstermemek Ýçin)")]
-    // 2048x2048 (20x20 birim) haritanýza göre bu deðerleri Inspector'dan ince ayar yapabilirsiniz
     public bool enableBounds = true;
     public Vector2 minBounds = new Vector2(-32f, -32f);
     public Vector2 maxBounds = new Vector2(32f, 32f);
 
     [Header("Kamera Sýnýrlarý")]
-    public float screenPadding = 0.5f; // Karakterin kafasý veya gövdesi ekrandan taþmasýn diye ufak bir pay
+    public float screenPadding = 0.5f;
 
     private Camera cam;
 
@@ -32,7 +32,9 @@ public class DynamicCamera : MonoBehaviour
     {
         cam = GetComponent<Camera>();
 
-        // Baþlangýçta kameranýn aniden sýçramasýný engellemek için direkt konuma git
+        // Oyun baþladýðýnda sahnede hazýr oyuncu varsa listeye ekle
+        FindAllPlayers();
+
         if (targets.Count > 0)
         {
             Vector3 center = GetCenterPoint();
@@ -40,14 +42,43 @@ public class DynamicCamera : MonoBehaviour
         }
     }
 
+    // --- YENÝ EKLENEN RADAR SÝSTEMÝ ---
+    // Bu fonksiyonu her yarým saniyede bir veya oyuncu doðduðunda çaðýrabiliriz
+    // Þu an için performans dostu olmasý adýna saniyede 2 kez (0.5s) taratýyoruz.
+    void OnEnable()
+    {
+        InvokeRepeating(nameof(FindAllPlayers), 0f, 0.5f);
+    }
+
+    void OnDisable()
+    {
+        CancelInvoke(nameof(FindAllPlayers));
+    }
+
+    void FindAllPlayers()
+    {
+        // Sahnede "Player" etiketine (Tag) sahip tüm objeleri bul
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        targets.Clear(); // Listeyi temizle
+
+        // Bulunan oyuncularý takibe al (eðer aktiflerse)
+        foreach (GameObject p in players)
+        {
+            if (p.activeInHierarchy)
+            {
+                targets.Add(p.transform);
+            }
+        }
+    }
+    // -----------------------------------
+
     void LateUpdate()
     {
         if (targets.Count == 0) return;
 
         Move();
         Zoom();
-
-        // Kamera hareketini ve zoom'unu bitirdikten SONRA oyuncularý içeri hapseder
         ClampTargetsToCameraBounds();
     }
 
@@ -56,13 +87,11 @@ public class DynamicCamera : MonoBehaviour
         Vector3 centerPoint = GetCenterPoint();
         Vector3 newPosition = centerPoint + offset;
 
-        // Harita dýþýný göstermeyi engellemek için Kamera Pozisyonunu Sýnýrla (Clamp)
         if (enableBounds)
         {
             float camHeight = cam.orthographicSize;
             float camWidth = cam.orthographicSize * cam.aspect;
 
-            // Kameranýn gidebileceði maksimum noktalarý hesapla
             float clampedX = Mathf.Clamp(newPosition.x, minBounds.x + camWidth, maxBounds.x - camWidth);
             float clampedY = Mathf.Clamp(newPosition.y, minBounds.y + camHeight, maxBounds.y - camHeight);
 
@@ -76,13 +105,11 @@ public class DynamicCamera : MonoBehaviour
     {
         float greatestDistance = GetGreatestDistance();
 
-        // Mesafe ile zoom u oranla
-        float targetZoom = Mathf.Lerp(minZoom, maxZoom, greatestDistance / zoomLimiter);
+        // Tek oyuncu varsa zoom'u minZoom'da tut, yoksa mesafeye göre hesapla
+        float targetZoom = (targets.Count == 1) ? minZoom : Mathf.Lerp(minZoom, maxZoom, greatestDistance / zoomLimiter);
 
-        // KESÝN SINIRLAMA: targetZoom deðeri ne olursa olsun minZoom ile maxZoom arasýnda hapsolur
         targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
 
-        // Pürüzsüz geçiþ (Unity'de kamera boyutu Orthographic Size ile deðiþtirilir)
         cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetZoom, Time.deltaTime * 3f);
     }
 
@@ -92,16 +119,14 @@ public class DynamicCamera : MonoBehaviour
         float camWidth = camHeight * cam.aspect;
         Vector3 camPos = transform.position;
 
-        // Ekranýn köþelerini hesapla ve padding (pay) ekleyerek daralt
         float minX = camPos.x - camWidth + screenPadding;
         float maxX = camPos.x + camWidth - screenPadding;
         float minY = camPos.y - camHeight + screenPadding;
         float maxY = camPos.y + camHeight - screenPadding;
 
-        // Listedeki tüm oyuncularý kontrol et ve ekran dýþýna çýkanlarý durdur
         foreach (Transform target in targets)
         {
-            if (target == null) continue;
+            if (target == null || !target.gameObject.activeInHierarchy) continue;
 
             Vector3 clampedPos = target.position;
             clampedPos.x = Mathf.Clamp(clampedPos.x, minX, maxX);
@@ -118,7 +143,8 @@ public class DynamicCamera : MonoBehaviour
         var bounds = new Bounds(targets[0].position, Vector3.zero);
         for (int i = 0; i < targets.Count; i++)
         {
-            bounds.Encapsulate(targets[i].position);
+            if (targets[i] != null && targets[i].gameObject.activeInHierarchy)
+                bounds.Encapsulate(targets[i].position);
         }
         return bounds.center;
     }
@@ -130,7 +156,8 @@ public class DynamicCamera : MonoBehaviour
         var bounds = new Bounds(targets[0].position, Vector3.zero);
         for (int i = 0; i < targets.Count; i++)
         {
-            bounds.Encapsulate(targets[i].position);
+            if (targets[i] != null && targets[i].gameObject.activeInHierarchy)
+                bounds.Encapsulate(targets[i].position);
         }
         return Mathf.Max(bounds.size.x, bounds.size.y);
     }

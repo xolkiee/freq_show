@@ -2,44 +2,38 @@ using System;
 
 public static class GameEvents
 {
-    // --- YENÝ EKLENEN KANAL (Düþmanlar önce bu kanala "Vurmak Ýstiyorum" diyecek) ---
-    public static event Action<int> OnDamageAttempt;
-    public static void TriggerDamageAttempt(int damageAmount)
+    // --- KÝMLÝKLENDÝRÝLMÝÞ (CO-OP) CAN VE HASAR KANALLARI ---
+
+    // Sadece hasar gerçekten alýndýðýnda (Dash atýlmýyorsa) tetiklenir (Kamera titremesi vs. için)
+    // Parametreler: playerIndex, damageAmount
+    public static event Action<int, int> OnPlayerDamaged;
+    public static void TriggerPlayerDamaged(int playerIndex, int damageAmount)
     {
-        OnDamageAttempt?.Invoke(damageAmount);
+        OnPlayerDamaged?.Invoke(playerIndex, damageAmount);
     }
 
-    // --- ESKÝ KANALLAR (Sadece Kamera ve UI bunlarý dinleyecek) ---
-
-    // Sadece hasar gerçekten alýndýðýnda (Dash atýlmýyorsa) tetiklenir
-    public static event Action<int> OnPlayerDamaged;
-    public static void TriggerPlayerDamaged(int damageAmount)
+    // Parametre: playerIndex
+    public static event Action<int> OnPlayerDied;
+    public static void TriggerPlayerDied(int playerIndex)
     {
-        OnPlayerDamaged?.Invoke(damageAmount);
+        OnPlayerDied?.Invoke(playerIndex);
     }
 
-    public static event Action OnPlayerDied;
-    public static void TriggerPlayerDied()
+    // UI (Can Barý) Güncellemesi
+    // Parametreler: playerIndex, currentHealth, maxHealth
+    public static event Action<int, int, int> OnHealthChanged;
+    public static void TriggerHealthChanged(int playerIndex, int currentHealth, int maxHealth)
     {
-        OnPlayerDied?.Invoke();
+        OnHealthChanged?.Invoke(playerIndex, currentHealth, maxHealth);
     }
 
-    public static event Action<int, int> OnHealthChanged;
-    public static void TriggerHealthChanged(int currentHealth, int maxHealth)
-    {
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
-    }
-    // --- MÜZÝK VE RÝTÝM KANALLARI ---
-
-    // Kick (Darbe) Kanalý
+    // --- MÜZÝK VE RÝTÝM KANALLARI (Deðiþmedi) ---
     public static event Action OnKickHit;
     public static void TriggerKickHit() => OnKickHit?.Invoke();
 
-    // Hi-Hat (Hýz/Kaos) Kanalý
     public static event Action OnHiHatHit;
     public static void TriggerHiHatHit() => OnHiHatHit?.Invoke();
 
-    // Sub-Bass (Atmosfer/Basýnç) Kanalý - Ýçinde þiddet verisi taþýr
     public static event Action<float> OnSubIntensity;
     public static void TriggerSubIntensity(float intensity) => OnSubIntensity?.Invoke(intensity);
 }

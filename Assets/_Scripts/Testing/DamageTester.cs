@@ -11,6 +11,6 @@ public class DamageTester : MonoBehaviour
     void Vur()
     {
         // ARTIK TriggerPlayerDamaged DEÐÝL, Giriþim metodunu çaðýrýyoruz
-        GameEvents.TriggerDamageAttempt(20);
+       // GameEvents.TriggerDamageAttempt(20);
     }
 }
