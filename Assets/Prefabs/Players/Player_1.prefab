@@ -251,13 +251,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 181780618870576679}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bbb822b7786e9504ba85ac6aab05cf39, type: 3}
+  m_Script: {fileID: 11500000, guid: e6407b88c4a22774187d8eda43dd2ceb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentLevel: 1
-  currentExp: 0
-  expToNextLevel: 10
-  levelUpManager: {fileID: 0}
 --- !u!1 &1680780597946832986
 GameObject:
   m_ObjectHideFlags: 0
