@@ -1,27 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem; // Yeni Input Sistemi eklendi
 
 public class PlayerShooting : MonoBehaviour
 {
     [Header("Silah Ayarları")]
-    public GameObject bulletPrefab; // Oluşturduğun Prefab'ı buraya sürükleyeceksin
-    public Transform firePoint;     // Merminin çıkacağı nokta
-    public float fireRate = 0.15f;  // Saniyede kaç mermi? (Düşürdükçe hızlanır)
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    public float fireRate = 0.15f;
     private float nextFireTime;
 
     [Header("Havuz (Pool) Ayarları")]
-    public int poolSize = 50; // Aynı anda ekranda olabilecek maksimum mermi
+    public int poolSize = 50;
     private List<GameObject> bulletPool;
 
-    private Camera mainCam;
     private PlayerController playerController;
     private bool isShooting;
 
     void Start()
     {
         playerController = GetComponent<PlayerController>();
-        mainCam = Camera.main;
         InitializePool();
     }
 
@@ -37,36 +35,39 @@ public class PlayerShooting : MonoBehaviour
         }
     }
 
+    // =================================================================
+    // YENİ INPUT SİSTEMİ: Sol Tık (Fare) veya Right Bumper [RB] (Gamepad)
+    // =================================================================
+    void OnShoot(InputValue value)
+    {
+        // isPressed, tuşa basılı tutulduğu sürece true, bırakıldığında false olur
+        isShooting = value.isPressed;
+    }
+
     void Update()
     {
-        // Yeni Input System ile Farenin Sol Tuşunu (veya Gamepad) oku
-        if (Mouse.current != null)
-        {
-            isShooting = Mouse.current.leftButton.isPressed;
-        }
-
-        // Taramalı mantığı: Basılı tutuyorsa ve bekleme süresi dolduysa ateş et
         // Taramalı mantığı: Basılı tutuyorsa, bekleme süresi dolduysa VE DASH ATMIYORSA ateş et
-if (isShooting && Time.time >= nextFireTime && !playerController.isDashing)
-{
-    nextFireTime = Time.time + fireRate;
-    Shoot();
-}
+        if (isShooting && Time.time >= nextFireTime && !playerController.isDashing)
+        {
+            nextFireTime = Time.time + fireRate;
+            Shoot();
+        }
     }
 
     void Shoot()
     {
         // Havuzdan (Pool) uyuyan bir mermi bul
         GameObject bullet = GetPooledBullet();
-        
+
         if (bullet != null)
         {
             // Mermiyi namlunun ucuna (FirePoint) taşı
             bullet.transform.position = firePoint.position;
-            
-            // Farenin olduğu yere doğru yön vektörü hesapla
-            Vector2 mousePos = mainCam.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            Vector2 fireDirection = (mousePos - (Vector2)firePoint.position).normalized;
+
+            // ARTIK FARE HESABI YOK!
+            // Karakter (PlayerController) zaten fareye veya Gamepad'e doğru döndüğü için,
+            // sadece karakterin baktığı yönü (transform.up) almamız yeterli.
+            Vector2 fireDirection = transform.up;
 
             // Mermiyi uyandır ve Bullet.cs içindeki Fire fonksiyonunu tetikle
             bullet.SetActive(true);
@@ -84,6 +85,6 @@ if (isShooting && Time.time >= nextFireTime && !playerController.isDashing)
                 return bulletPool[i];
             }
         }
-        return null; // Eğer havuzda mermi kalmadıysa ateş etmez (Mermi cehennemini korur)
+        return null; // Eğer havuzda mermi kalmadıysa ateş etmez
     }
 }

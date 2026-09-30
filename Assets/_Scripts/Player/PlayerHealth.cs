@@ -1,9 +1,13 @@
 using UnityEngine;
+using UnityEngine.InputSystem; // playerIndex için Input sistemi kütüphanesi eklendi
 
 public class PlayerHealth : MonoBehaviour
 {
     public int maxHealth = 100;
     public int currentHealth;
+
+    [HideInInspector]
+    public int myPlayerIndex; // 0 = Player 1, 1 = Player 2
 
     private PlayerController playerController;
 
@@ -12,34 +16,35 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = maxHealth;
         playerController = GetComponent<PlayerController>();
 
-        // ARTIK OnPlayerDamaged DEÐÝL, OnDamageAttempt DÝNLÝYORUZ
-        GameEvents.OnDamageAttempt += TakeDamage;
+        // OYUNCUNUN KÝMLÝÐÝNÝ TESPÝT ET (P1 mi P2 mi?)
+        PlayerInput pi = GetComponent<PlayerInput>();
+        if (pi != null)
+        {
+            myPlayerIndex = pi.playerIndex;
+        }
 
-        GameEvents.TriggerHealthChanged(currentHealth, maxHealth);
+        // UI'a "Ben doðdum, caným ful" mesajýný kendi kimliðimle yolla
+        GameEvents.TriggerHealthChanged(myPlayerIndex, currentHealth, maxHealth);
     }
 
-    void OnDestroy()
-    {
-        GameEvents.OnDamageAttempt -= TakeDamage;
-    }
-
-    private void TakeDamage(int damageAmount)
+    // Mermi doðrudan bu fonksiyonu çaðýracak (Radyo dinlemesini sildik)
+    // NOT: Public yapmak zorundayýz ki mermi dýþarýdan ulaþabilsin
+    public void TakeDamage(int damageAmount)
     {
         if (playerController != null && playerController.isDashing)
         {
-            Debug.Log("Dodge atýldý, hasardan kaçýnýldý! Kamera sallanmayacak.");
-            return; // Fonksiyondan çýk, aþaðýdaki hiçbir þey çalýþmasýn
+            Debug.Log($"Player {myPlayerIndex + 1} Dodge attý, hasardan kaçýnýldý! Kamera sallanmayacak.");
+            return;
         }
 
         // --- EÐER BURAYA GELEBÝLDÝYSEK DASH ATMIYORUZ DEMEKTÝR ---
-
         currentHealth -= damageAmount;
 
-        // KAMERAYA ONAY VER: "Gerçekten hasar aldým, þimdi dünyayý sars!"
-        GameEvents.TriggerPlayerDamaged(damageAmount);
+        // KAMERAYA ONAY VER: Kendi kimliðini de gönder
+        GameEvents.TriggerPlayerDamaged(myPlayerIndex, damageAmount);
 
-        // UI (CAN BARI) GÜNCELLE
-        GameEvents.TriggerHealthChanged(currentHealth, maxHealth);
+        // UI (CAN BARI) GÜNCELLE: "Benim (P1/P2) caným deðiþti" diye anons et
+        GameEvents.TriggerHealthChanged(myPlayerIndex, currentHealth, maxHealth);
 
         if (currentHealth <= 0)
         {
@@ -50,10 +55,10 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
-        Debug.Log("Oyuncu Öldü! Game Over.");
-        GameEvents.TriggerPlayerDied();
+        Debug.Log($"Player {myPlayerIndex + 1} Öldü! Game Over.");
+        GameEvents.TriggerPlayerDied(myPlayerIndex);
 
-        // Karakteri þimdilik yok etmeyelim, sadece görünmez yapalým
+        // Karakteri yok etmeyelim, sadece görünmez yapalým
         gameObject.SetActive(false);
     }
 }

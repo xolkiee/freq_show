@@ -3,6 +3,10 @@ using UnityEngine.UI;
 
 public class HealthUI : MonoBehaviour
 {
+    [Header("Bu UI Kimin Canýný Gösterecek?")]
+    [Tooltip("Player 1 için 0, Player 2 için 1 yazýn")]
+    public int targetPlayerIndex = 0;
+
     private Slider healthSlider;
 
     void Awake()
@@ -22,10 +26,14 @@ public class HealthUI : MonoBehaviour
         GameEvents.OnHealthChanged -= UpdateHealthBar;
     }
 
-    private void UpdateHealthBar(int currentHealth, int maxHealth)
+    private void UpdateHealthBar(int incomingPlayerIndex, int currentHealth, int maxHealth)
     {
-        // Slider deðerlerini güncelle
-        healthSlider.maxValue = maxHealth;
-        healthSlider.value = currentHealth;
+        // Gelen anons benim takip ettiðim oyuncuya (0 veya 1) mý ait?
+        if (incomingPlayerIndex == targetPlayerIndex)
+        {
+            // Eþleþiyorsa slider deðerlerini güncelle
+            healthSlider.maxValue = maxHealth;
+            healthSlider.value = currentHealth;
+        }
     }
 }

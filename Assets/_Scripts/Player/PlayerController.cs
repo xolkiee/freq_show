@@ -15,18 +15,23 @@ public class PlayerController : MonoBehaviour
     [HideInInspector] public bool isDashing;
     private float dashTimer;
 
+    [Header("Nişan (Aim) Ayarları")]
+    private Vector2 aimInput;
+    private bool isGamepad; // Oyuncu Gamepad mi yoksa Fare mi kullanıyor?
+
     [Header("Bileşenler")]
     private Rigidbody2D rb;
     private Camera mainCamera;
-    private Vector2 mousePosition;
+    private PlayerInput playerInput; // Hangi cihazı kullandığımızı anlamak için
 
-    // --- YENİ EKLENEN: Orijinal katman hafızası ---
+    // --- Orijinal katman hafızası ---
     private int originalLayer;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         mainCamera = Camera.main;
+        playerInput = GetComponent<PlayerInput>();
 
         // Oyun başladığında oyuncunun varsayılan fizik katmanını kaydet
         originalLayer = gameObject.layer;
@@ -34,30 +39,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Eğer dash atıyorsak başka bir girdi almasını engelliyoruz
-        if (isDashing) return;
-
-        // 1. HAREKET GİRDİSİ (WASD) - Geçici olarak direkt klavyeden okuyoruz, co-op yaparken PlayerInput'a bağlayacağız
-        moveInput = Vector2.zero;
-        if (Keyboard.current != null)
-        {
-            if (Keyboard.current.wKey.isPressed) moveInput.y += 1;
-            if (Keyboard.current.sKey.isPressed) moveInput.y -= 1;
-            if (Keyboard.current.aKey.isPressed) moveInput.x -= 1;
-            if (Keyboard.current.dKey.isPressed) moveInput.x += 1;
-        }
-
-        // 2. NİŞAN ALMA GİRDİSİ (Mouse Konumu)
-        if (Mouse.current != null)
-        {
-            mousePosition = mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        }
-
-        // 3. DODGE GİRDİSİ (Space Tuşu)
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && dashTimer <= 0)
-        {
-            StartCoroutine(DashRoutine());
-        }
+        // O anki oyuncunun Gamepad kullanıp kullanmadığını algıla
+        isGamepad = playerInput.currentControlScheme == "Gamepad";
 
         // Dash bekleme süresini (Cooldown) say
         if (dashTimer > 0) dashTimer -= Time.deltaTime;
@@ -68,14 +51,58 @@ public class PlayerController : MonoBehaviour
         // Dash atarken fizik motoruna müdahale etmiyoruz
         if (isDashing) return;
 
-        // Karakteri yürüt (Vektörü normalize ediyoruz ki çapraz giderken 2 kat hızlanmasın)
-        rb.velocity = moveInput.normalized * moveSpeed;
+        // 1. HAREKET UYGULAMA (Input sistemi WASD ve Analog çubuğu otomatik normalize eder)
+        rb.velocity = moveInput * moveSpeed;
 
-        // Karakteri Mouse imlecine doğru döndür (Twin-Stick mantığı)
-        Vector2 aimDirection = mousePosition - rb.position;
-        float aimAngle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg - 90f; // Yüzünü farenin olduğu yere dönmesi için -90 derece ofset
-        rb.rotation = aimAngle;
+        // 2. NİŞAN ALMA UYGULAMA (Twin-Stick Mantığı)
+        if (isGamepad)
+        {
+            // GAMEPAD: Sağ analog çubuğun itildiği yöne dön
+            if (aimInput.sqrMagnitude > 0.01f) // Çubuk bırakıldığında karakterin açısının sıfırlanmasını önler
+            {
+                float aimAngle = Mathf.Atan2(aimInput.y, aimInput.x) * Mathf.Rad2Deg - 90f;
+                rb.rotation = aimAngle;
+            }
+        }
+        else
+        {
+            // KLAVYE/FARE: Ekranda farenin bulunduğu dünya koordinatına doğru dön
+            Vector2 mouseWorldPosition = mainCamera.ScreenToWorldPoint(aimInput);
+            Vector2 aimDirection = mouseWorldPosition - rb.position;
+            float aimAngle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg - 90f;
+            rb.rotation = aimAngle;
+        }
     }
+
+    // =================================================================
+    // YENİ INPUT SİSTEMİ MESAJLARI (Player Input "Send Messages" modunda bunları tetikler)
+    // =================================================================
+
+    // Sol Analog (Gamepad) veya WASD (Klavye)
+    void OnMove(InputValue value)
+    {
+        // Dash atarken bile parmağını çektiğini (veya yön değiştirdiğini) arka planda hafızaya almalıyız!
+        moveInput = value.Get<Vector2>();
+    }
+
+    // Sağ Analog (Gamepad) veya Fare Pozisyonu
+    void OnAim(InputValue value)
+    {
+        aimInput = value.Get<Vector2>();
+    }
+
+    // Space (Klavye) veya B/Daire (Gamepad)
+    void OnDash(InputValue value)
+    {
+        if (value.isPressed && dashTimer <= 0 && !isDashing)
+        {
+            StartCoroutine(DashRoutine());
+        }
+    }
+
+    // Sol Tık (Fare) veya Right Bumper [RB] (Gamepad)
+
+    // =================================================================
 
     // Dodge (Dash) Mekaniğini yöneten asenkron fonksiyon
     private IEnumerator DashRoutine()
