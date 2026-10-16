@@ -50,7 +50,7 @@ public class PlayerShooting : MonoBehaviour
         }
     }
 
-    void Shoot()
+   void Shoot()
     {
         GameObject bullet = GetPooledBullet();
 
@@ -59,14 +59,16 @@ public class PlayerShooting : MonoBehaviour
             bullet.transform.position = firePoint.position;
             Vector2 fireDirection = transform.up;
 
-            // YENİ: İki yeteneğin de o anki seviyesini (değerini) hafızadan çekiyoruz
+            // Yetenek seviyelerini hafızadan çekiyoruz
             int pierceCount = (int)upgradeManager.GetUpgradeValue(UpgradeID.PiercingBullet);
             int ricochetCount = (int)upgradeManager.GetUpgradeValue(UpgradeID.RicochetBullet);
+            int cannonballLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.Cannonball);
+            int shrapnelLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.Shrapnel);
 
             bullet.SetActive(true);
             
-            // YENİ: Mermiye artık hem delme hem sekme değerini veriyoruz
-            bullet.GetComponent<Bullet>().Fire(fireDirection, pierceCount, ricochetCount);
+            // Mermiye tüm yetenek verilerini gönderiyoruz
+            bullet.GetComponent<Bullet>().Fire(fireDirection, pierceCount, ricochetCount, cannonballLevel, shrapnelLevel);
         }
     }
 

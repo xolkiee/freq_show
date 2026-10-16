@@ -7,7 +7,7 @@ public class EnemyAI : MonoBehaviour
 
     public Transform playerTarget;
     private Rigidbody2D rb;
-
+    private float knockbackTimer = 0f;
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -43,6 +43,12 @@ public class EnemyAI : MonoBehaviour
 
     void FixedUpdate()
     {
+        // Eğer düşman gülle yiyip savruluyorsa, yürüme kodunu 0.2 saniyeliğine iptal et
+        if (knockbackTimer > 0)
+        {
+            knockbackTimer -= Time.fixedDeltaTime;
+            return; 
+        }
         // Eğer sahnede yaşayan oyuncu kalmadıysa fren yap ve bekle
         if (playerTarget == null)
         {
@@ -68,5 +74,11 @@ public class EnemyAI : MonoBehaviour
             // Yeterince yakınsa dur ama rotasyon (yukarıdaki kod sayesinde) takibe devam etsin
             rb.velocity = Vector2.zero;
         }
+    }
+    public void ApplyKnockback(Vector2 force, float duration)
+    {
+        knockbackTimer = duration;
+        rb.velocity = Vector2.zero; // O anki yürüme hızını sıfırla ki itme net hissedilsin
+        rb.AddForce(force, ForceMode2D.Impulse);
     }
 }

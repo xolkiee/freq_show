@@ -15,7 +15,7 @@ MonoBehaviour:
   upgradeName: Fire Rate
   description: 
   group: 3
-  id: 4
+  id: 5
   baseValue: 0.05
   valuePerLevel: 0
   maxLevel: 3

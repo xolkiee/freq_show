@@ -1,7 +1,14 @@
 using UnityEngine;
 
-public enum UpgradeGroup { Bullet, Contact, Dash, Other }
-public enum UpgradeID { PiercingBullet, RicochetBullet, FireDash, Shrapnel, FireRate, MaxHealth, MoveSpeed }
+public enum UpgradeGroup { Bullet1, Bullet2, Dash, Other }
+public enum UpgradeID { // Hızlı Karakter (Agile)
+    PiercingBullet, RicochetBullet, FireDash, CuttingWind, MoveSpeed, FireRate, 
+    
+    // Güçlü Karakter (Heavy)
+    Shrapnel, Cannonball, MagmaPool, SeismicShock, GroundSmash, Shield, BulletSize, DamageIncrease,
+    
+    // Ortak (Shared)
+    MaxHealth}
 
 [CreateAssetMenu(fileName = "Yeni Yetenek", menuName = "Oyun/Yetenek")]
 public class UpgradeData : ScriptableObject

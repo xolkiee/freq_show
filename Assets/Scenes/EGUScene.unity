@@ -937,8 +937,8 @@ MonoBehaviour:
   - {fileID: 1021370375}
   testUpgrades:
   - {fileID: 11400000, guid: ea80e66f7d8aa1343a4b5dd855943925, type: 2}
-  - {fileID: 11400000, guid: 711f9130ae5009a47bd78deae3521285, type: 2}
-  - {fileID: 11400000, guid: d13690c7e99bbfc468415f37960f4740, type: 2}
+  - {fileID: 11400000, guid: 0a171f0aa12a1754dac9528a1704a3fc, type: 2}
+  - {fileID: 11400000, guid: 996ee1f9307e21b4f820f17115816662, type: 2}
 --- !u!114 &391892471
 MonoBehaviour:
   m_ObjectHideFlags: 0
