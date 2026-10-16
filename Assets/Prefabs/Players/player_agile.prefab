@@ -16,6 +16,10 @@ PrefabInstance:
       propertyPath: moveSpeed
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 5140913230528560775, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
+      propertyPath: fireTrailPrefab
+      value: 
+      objectReference: {fileID: 2195425509710279918, guid: 18e24cb7fda1c6c4ebd247e4099b1c4c, type: 3}
     - target: {fileID: 5548051642580172227, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -83,5 +87,25 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 181780618870576679, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
+      insertIndex: 8
+      addedObject: {fileID: -3295370599843210251}
   m_SourcePrefab: {fileID: 100100000, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
+--- !u!1 &481710446636781368 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 181780618870576679, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
+  m_PrefabInstance: {fileID: 300247605101041951}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-3295370599843210251
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 481710446636781368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3484e3a8208183f4e94204663ee92d90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

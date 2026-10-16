@@ -19,6 +19,10 @@ public class PlayerController : MonoBehaviour
     private Vector2 aimInput;
     private bool isGamepad; // Oyuncu Gamepad mi yoksa Fare mi kullanıyor?
 
+    [Header("Yetenek (Upgrade) Ayarları")]
+    public GameObject fireTrailPrefab; // Yere bırakılacak ateşin prefabı
+    private PlayerUpgradeManager upgradeManager; // Karakterin hafızası
+
     [Header("Bileşenler")]
     private Rigidbody2D rb;
     private Camera mainCamera;
@@ -32,6 +36,7 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         mainCamera = Camera.main;
         playerInput = GetComponent<PlayerInput>();
+        upgradeManager = GetComponent<PlayerUpgradeManager>(); // Hafızayı bul
 
         // Oyun başladığında oyuncunun varsayılan fizik katmanını kaydet
         originalLayer = gameObject.layer;
@@ -119,8 +124,32 @@ public class PlayerController : MonoBehaviour
         else
             rb.velocity = transform.up * dashSpeed; // Durduğu yerde basarsa baktığı yöne atılır
 
-        // Dash süresi kadar bekle (0.15 saniye)
-        yield return new WaitForSeconds(dashDuration);
+        //  DASH SIRASINDA YERE ATEŞ BIRAKMA DÖNGÜSÜ
+        // Hafızadan FireDash yeteneğinin değerini çekiyoruz. (Yoksa 0 döner).
+        float fireDashLifeTime = upgradeManager.GetUpgradeValue(UpgradeID.FireDash);
+        
+        float timePassed = 0f;
+        float fireSpawnInterval = 0.1f; // Ne sıklıkla ateş bırakılacak 
+        float nextFireSpawnTime = 0f;
+
+        // Dash süresi boyunca her frame'de çalışacak bir While döngüsü kuruyoruz
+        while (timePassed < dashDuration)
+        {
+            // Eğer karakterde FireDash yeteneği varsa ve ateş bırakma süresi geldiyse
+            if (fireDashLifeTime > 0 && timePassed >= nextFireSpawnTime)
+            {
+                // Yere bir ateş prefabı kopyala
+                GameObject fire = Instantiate(fireTrailPrefab, transform.position, Quaternion.identity);
+                // Ateşin hasarını ayarla ve ne kadar süre kalacağını belirle
+                fire.GetComponent<FireTrail>().Setup(2, fireDashLifeTime);
+                
+                nextFireSpawnTime += fireSpawnInterval;
+            }
+
+            timePassed += Time.deltaTime;
+            yield return null; // Bir sonraki frame'i bekle
+        }
+        // ========================================================
 
         // --- I-FRAME BİTİŞİ: Karakteri orijinal (vurulabilir) katmanına geri döndür ---
         gameObject.layer = originalLayer;

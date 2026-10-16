@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class LevelUpManager : MonoBehaviour
 {
-    public static LevelUpManager Instance; // Merkezden çağrılabilmesi için eklendi
+    public static LevelUpManager Instance; 
     public static bool isGamePausedForLevelUp = false; 
 
     [Header("Ana Paneller")]
@@ -13,21 +13,18 @@ public class LevelUpManager : MonoBehaviour
     public GameObject coopContainer; 
 
     [Header("Buton Yazıları")]
-    public TMP_Text[] singleButtonTexts; // Tek oyunculu (Ortadaki) 3 buton
-    public TMP_Text[] p1ButtonTexts;     // Co-op (Soldaki) 3 buton
-    public TMP_Text[] p2ButtonTexts;     // Co-op (Sağdaki) 3 buton
+    public TMP_Text[] singleButtonTexts; 
+    public TMP_Text[] p1ButtonTexts;     
+    public TMP_Text[] p2ButtonTexts;  
+
+    [Header("Test Yetenek Havuzu")]
+    public List<UpgradeData> testUpgrades; 
 
     private int activePlayerCount;
-    private bool p1HasChosen = false;
-    private bool p2HasChosen = false;
     private bool singlePlayerHasChosen = false;
-
-    private int[] currentChoices = new int[3]; // Tek oyuncu için havuz
-    private int[] p1CurrentChoices = new int[3];
-    private int[] p2CurrentChoices = new int[3];
-
-    private int p1SelectedBuffID = -1;
-    private int p2SelectedBuffID = -1;
+    
+    private UpgradeData[] singlePlayerChoices = new UpgradeData[3];
+    private UpgradeData selectedUpgrade;
 
     void Awake()
     {
@@ -46,39 +43,28 @@ public class LevelUpManager : MonoBehaviour
         levelUpPanel.SetActive(true);
         activePlayerCount = playerCount;
 
-        // Seçim kilitlerini sıfırla
-        p1HasChosen = false;
-        p2HasChosen = false;
         singlePlayerHasChosen = false;
 
-        if (playerCount == 1)
-        {
-            singlePlayerContainer.SetActive(true);
-            coopContainer.SetActive(false);
-            GenerateBuffsForSinglePlayer();
-        }
-        else
-        {
-            singlePlayerContainer.SetActive(false);
-            coopContainer.SetActive(true);
-            GenerateBuffsForP1();
-            GenerateBuffsForP2();
-        }
+        singlePlayerContainer.SetActive(true);
+        coopContainer.SetActive(false);
+        GenerateBuffsForSinglePlayer();
     }
 
-    // --- TEK OYUNCU İÇİN (SOLO) ---
     void GenerateBuffsForSinglePlayer()
     {
-        // NOT: İleride Furkan'ın CharacterData (SO) sistemini buraya bağlayacağız
-        // Şimdilik test amaçlı rastgele havuz oluşturuyoruz
-        List<int> pool = new List<int> { 0, 1, 2, 10, 11, 12 }; 
         for (int i = 0; i < 3; i++)
         {
-            int r = Random.Range(0, pool.Count);
-            currentChoices[i] = pool[r];
-            pool.RemoveAt(r);
-            
-            singleButtonTexts[i].text = "Yetenek ID: " + currentChoices[i];
+            if (testUpgrades.Count > 0)
+            {
+                // YENİ Zeka: Test listesinde kaç yetenek varsa sırayla butonlara diz. 
+                // Eğer listede sadece 2 yetenek varsa ve 3. buton boş kalacaksa, çökmemesi için ilk yeteneği tekrar yazdır.
+                int indexToUse = (i < testUpgrades.Count) ? i : 0;
+                
+                singlePlayerChoices[i] = testUpgrades[indexToUse]; 
+                
+                // ÇÖZÜM BURADA: "SEÇİLDİ" yazısını her menü açılışında ezip gerçek ismi yazdırıyoruz
+                singleButtonTexts[i].text = singlePlayerChoices[i].upgradeName + "\n" + singlePlayerChoices[i].description;
+            }
         }
     }
 
@@ -86,65 +72,16 @@ public class LevelUpManager : MonoBehaviour
     {
         if (singlePlayerHasChosen) return;
         
-        p1SelectedBuffID = currentChoices[index];
+        selectedUpgrade = singlePlayerChoices[index];
         singlePlayerHasChosen = true;
         singleButtonTexts[index].text = "SEÇİLDİ!";
         
-        CheckReady(); // 1 kişi olduğu için direkt oyunu devam ettirir
-    }
-
-    // --- CO-OP İÇİN (2 OYUNCU) ---
-    void GenerateBuffsForP1()
-    {
-        List<int> pool = new List<int> { 0, 1, 2 }; // Örn: Sadece Heavy yetenekleri
-        for (int i = 0; i < 3; i++)
-        {
-            int r = Random.Range(0, pool.Count);
-            p1CurrentChoices[i] = pool[r];
-            pool.RemoveAt(r);
-            p1ButtonTexts[i].text = "P1 Yetenek: " + p1CurrentChoices[i];
-        }
-    }
-
-    void GenerateBuffsForP2()
-    {
-        List<int> pool = new List<int> { 10, 11, 12 }; // Örn: Sadece Agile yetenekleri
-        for (int i = 0; i < 3; i++)
-        {
-            int r = Random.Range(0, pool.Count);
-            p2CurrentChoices[i] = pool[r];
-            pool.RemoveAt(r);
-            p2ButtonTexts[i].text = "P2 Yetenek: " + p2CurrentChoices[i];
-        }
-    }
-
-    public void P1SelectBuff(int index)
-    {
-        if (p1HasChosen) return;
-        p1SelectedBuffID = p1CurrentChoices[index];
-        p1HasChosen = true;
-        p1ButtonTexts[index].text = "BEKLENİYOR..";
         CheckReady();
     }
 
-    public void P2SelectBuff(int index)
-    {
-        if (p2HasChosen) return;
-        p2SelectedBuffID = p2CurrentChoices[index];
-        p2HasChosen = true;
-        p2ButtonTexts[index].text = "BEKLENİYOR..";
-        CheckReady();
-    }
-
-    // --- ORTAK ONAY VE OYUNA DÖNÜŞ ---
     void CheckReady()
     {
-        if (activePlayerCount == 1 && singlePlayerHasChosen)
-        {
-            ApplyBuffs();
-            ResumeGame();
-        }
-        else if (activePlayerCount == 2 && p1HasChosen && p2HasChosen)
+        if (singlePlayerHasChosen)
         {
             ApplyBuffs();
             ResumeGame();
@@ -153,8 +90,15 @@ public class LevelUpManager : MonoBehaviour
 
     void ApplyBuffs()
     {
-        Debug.Log("P1'e verilecek Buff ID: " + p1SelectedBuffID);
-        if(activePlayerCount == 2) Debug.Log("P2'ye verilecek Buff ID: " + p2SelectedBuffID);
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            PlayerUpgradeManager manager = player.GetComponent<PlayerUpgradeManager>();
+            if (manager != null)
+            {
+                manager.AddOrUpdateUpgrade(selectedUpgrade);
+            }
+        }
     }
 
     void ResumeGame()

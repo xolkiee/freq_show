@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem; // Yeni Input Sistemi eklendi
+using UnityEngine.InputSystem; 
 
 public class PlayerShooting : MonoBehaviour
 {
@@ -15,38 +15,34 @@ public class PlayerShooting : MonoBehaviour
     private List<GameObject> bulletPool;
 
     private PlayerController playerController;
+    private PlayerUpgradeManager upgradeManager; // YENİ EKLENDİ
     private bool isShooting;
 
     void Start()
     {
         playerController = GetComponent<PlayerController>();
+        upgradeManager = GetComponent<PlayerUpgradeManager>(); // YENİ EKLENDİ
         InitializePool();
     }
 
-    // OYUN BAŞLADIĞINDA MERMİLERİ ÜRETİP SAKLIYORUZ
     void InitializePool()
     {
         bulletPool = new List<GameObject>();
         for (int i = 0; i < poolSize; i++)
         {
             GameObject obj = Instantiate(bulletPrefab);
-            obj.SetActive(false); // Başlangıçta görünmez yap
+            obj.SetActive(false); 
             bulletPool.Add(obj);
         }
     }
 
-    // =================================================================
-    // YENİ INPUT SİSTEMİ: Sol Tık (Fare) veya Right Bumper [RB] (Gamepad)
-    // =================================================================
     void OnShoot(InputValue value)
     {
-        // isPressed, tuşa basılı tutulduğu sürece true, bırakıldığında false olur
         isShooting = value.isPressed;
     }
 
     void Update()
     {
-        // Taramalı mantığı: Basılı tutuyorsa, bekleme süresi dolduysa VE DASH ATMIYORSA ateş et
         if (isShooting && Time.time >= nextFireTime && !playerController.isDashing)
         {
             nextFireTime = Time.time + fireRate;
@@ -56,35 +52,30 @@ public class PlayerShooting : MonoBehaviour
 
     void Shoot()
     {
-        // Havuzdan (Pool) uyuyan bir mermi bul
         GameObject bullet = GetPooledBullet();
 
         if (bullet != null)
         {
-            // Mermiyi namlunun ucuna (FirePoint) taşı
             bullet.transform.position = firePoint.position;
-
-            // ARTIK FARE HESABI YOK!
-            // Karakter (PlayerController) zaten fareye veya Gamepad'e doğru döndüğü için,
-            // sadece karakterin baktığı yönü (transform.up) almamız yeterli.
             Vector2 fireDirection = transform.up;
 
-            // Mermiyi uyandır ve Bullet.cs içindeki Fire fonksiyonunu tetikle
+            // YENİ: İki yeteneğin de o anki seviyesini (değerini) hafızadan çekiyoruz
+            int pierceCount = (int)upgradeManager.GetUpgradeValue(UpgradeID.PiercingBullet);
+            int ricochetCount = (int)upgradeManager.GetUpgradeValue(UpgradeID.RicochetBullet);
+
             bullet.SetActive(true);
-            bullet.GetComponent<Bullet>().Fire(fireDirection);
+            
+            // YENİ: Mermiye artık hem delme hem sekme değerini veriyoruz
+            bullet.GetComponent<Bullet>().Fire(fireDirection, pierceCount, ricochetCount);
         }
     }
 
-    // HAVUZDA BOŞTA OLAN İLK MERMİYİ BULAN FONKSİYON
     GameObject GetPooledBullet()
     {
         for (int i = 0; i < bulletPool.Count; i++)
         {
-            if (!bulletPool[i].activeInHierarchy)
-            {
-                return bulletPool[i];
-            }
+            if (!bulletPool[i].activeInHierarchy) return bulletPool[i];
         }
-        return null; // Eğer havuzda mermi kalmadıysa ateş etmez
+        return null; 
     }
 }
