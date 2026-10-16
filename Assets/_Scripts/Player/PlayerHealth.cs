@@ -58,6 +58,12 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log($"Player {myPlayerIndex + 1} Öldü! Game Over.");
         GameEvents.TriggerPlayerDied(myPlayerIndex);
 
+        // --- ÝÞTE EKSÝK OLAN KRÝTÝK BAÐLANTI ---
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.PlayerDied();
+        }
+
         // Karakteri yok etmeyelim, sadece görünmez yapalým
         gameObject.SetActive(false);
     }

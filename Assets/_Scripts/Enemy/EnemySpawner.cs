@@ -23,13 +23,13 @@ public class EnemySpawner : MonoBehaviour
     void OnEnable()
     {
         // FURKAN'IN RADYOSUNA BAĞLANTI:
-        GameEvents.OnKickHit += SpawnEnemyOutsideCamera; // Kick vurduğunda anında fırlat
-        GameEvents.OnSubIntensity += AdjustMultiplier;   // Sub-bass şiddetine göre hızı katla
+        GameEvents.OnKickHit += HandleKickSpawn;
+        GameEvents.OnSubIntensity += AdjustMultiplier;
     }
 
     void OnDisable()
     {
-        GameEvents.OnKickHit -= SpawnEnemyOutsideCamera;
+        GameEvents.OnKickHit -= HandleKickSpawn;
         GameEvents.OnSubIntensity -= AdjustMultiplier;
     }
 
@@ -42,6 +42,9 @@ public class EnemySpawner : MonoBehaviour
 
     void Update()
     {
+        // YENİ: Eğer oyun oynanış durumunda değilse zamanlayıcıları ve üretimi durdur
+        if (GameManager.Instance == null || GameManager.Instance.currentState != GameManager.GameState.Playing) return;
+
         // 1. DİNAMİK ZORLUK (Zamanla kendiliğinden hızlanma)
         if (Time.time >= nextDifficultyIncrease)
         {
@@ -54,6 +57,15 @@ public class EnemySpawner : MonoBehaviour
         {
             SpawnEnemyOutsideCamera();
             nextSpawnTime = Time.time + GetCurrentSpawnInterval();
+        }
+    }
+
+    // YENİ: Lobideyken veya Level Up ekranındayken Kick vursa bile düşman doğmasını engelleyen güvenlik duvarı
+    private void HandleKickSpawn()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Playing)
+        {
+            SpawnEnemyOutsideCamera();
         }
     }
 
