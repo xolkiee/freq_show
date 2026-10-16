@@ -7,54 +7,43 @@ public class CharacterSelectManager : MonoBehaviour
     public GameObject heavyPrefab;
     public GameObject agilePrefab;
 
+    [Header("Lobi Doðma Noktasý")]
+    public Transform lobbySpawnPoint; // Karakterlerin lobide doðacaðý yer
+
     [Header("UI ve Yönetim")]
     public GameObject selectionUI;
     private PlayerInputManager inputManager;
-    private int currentPlayers = 0;
+    public int currentPlayers = 0;
 
     private bool isGameStarted = false;
 
     void Start()
     {
         inputManager = GetComponent<PlayerInputManager>();
-
-        // --- ZAMANI VE SESLERÝ DONDUR ---
-        Time.timeScale = 0f;         // Düþmanlarý, fizikleri ve animasyonlarý durdurur
-        AudioListener.pause = true;  // Oyundaki tüm sesleri ve müzikleri susturur
+        Time.timeScale = 1f; // Lobide rahatça yürüyüp ateþ edebilmeleri için zaman akýyor!
     }
 
     void Update()
     {
-        if (isGameStarted) return;
+        // Oyun baþladýysa veya maksimum oyuncu sayýsýna (2) ulaþýldýysa yeni giriþ alma
+        if (isGameStarted || currentPlayers >= 2) return;
 
-        if (currentPlayers >= 2)
-        {
-            StartGame();
-            return;
-        }
-
-        // --- KLAVYE (PLAYER 1) SEÇÝMLERÝ ---
+        // --- KLAVYE SEÇÝMLERÝ ---
         if (Keyboard.current != null)
         {
             if (Keyboard.current.digit1Key.wasPressedThisFrame)
                 SpawnPlayer(heavyPrefab, "KeyboardMouse", Keyboard.current);
             else if (Keyboard.current.digit2Key.wasPressedThisFrame)
                 SpawnPlayer(agilePrefab, "KeyboardMouse", Keyboard.current);
-
-            if (currentPlayers > 0 && Keyboard.current.enterKey.wasPressedThisFrame)
-                StartGame();
         }
 
-        // --- GAMEPAD (PLAYER 2) SEÇÝMLERÝ ---
-        if (Gamepad.current != null)
+        // --- GAMEPAD SEÇÝMLERÝ ---
+        foreach (var gamepad in Gamepad.all)
         {
-            if (Gamepad.current.dpad.left.wasPressedThisFrame)
-                SpawnPlayer(heavyPrefab, "Gamepad", Gamepad.current);
-            else if (Gamepad.current.dpad.right.wasPressedThisFrame)
-                SpawnPlayer(agilePrefab, "Gamepad", Gamepad.current);
-
-            if (currentPlayers > 0 && Gamepad.current.startButton.wasPressedThisFrame)
-                StartGame();
+            if (gamepad.dpad.left.wasPressedThisFrame)
+                SpawnPlayer(heavyPrefab, "Gamepad", gamepad);
+            else if (gamepad.dpad.right.wasPressedThisFrame)
+                SpawnPlayer(agilePrefab, "Gamepad", gamepad);
         }
     }
 
@@ -69,20 +58,22 @@ public class CharacterSelectManager : MonoBehaviour
         }
 
         inputManager.playerPrefab = prefabToSpawn;
-        inputManager.JoinPlayer(-1, -1, scheme, device);
+        PlayerInput newPlayer = inputManager.JoinPlayer(-1, -1, scheme, device);
+
+        // Oyuncuyu lobinin ortasýna yerleþtir
+        if (lobbySpawnPoint != null && newPlayer != null)
+        {
+            newPlayer.transform.position = lobbySpawnPoint.position + new Vector3(currentPlayers * 1.5f, 0, 0);
+        }
 
         currentPlayers++;
+        GameManager.Instance.RegisterPlayer(); // GameManager'a oyuncuyu kaydet
     }
 
-    void StartGame()
+    // Portal tarafýndan çaðrýlacak fonksiyon
+    public void LockLobbyAndStart()
     {
         isGameStarted = true;
         if (selectionUI != null) selectionUI.SetActive(false);
-
-        // --- ZAMANI VE SESLERÝ GERÝ AÇ ---
-        Time.timeScale = 1f;          // Fizik ve oyun akýþý normale döner
-        AudioListener.pause = false;  // Müzikler ve ses efektleri kaldýðý yerden patlar
-
-        Debug.Log("Oyun Baþladý! Mevcut Oyuncu: " + currentPlayers);
     }
 }
