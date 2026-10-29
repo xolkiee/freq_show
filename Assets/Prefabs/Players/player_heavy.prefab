@@ -105,3 +105,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3484e3a8208183f4e94204663ee92d90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  availableUpgrades:
+  - {fileID: 11400000, guid: d8cc3f68a7a39bf43a88f393dd92c089, type: 2}
+  - {fileID: 11400000, guid: 996ee1f9307e21b4f820f17115816662, type: 2}
+  - {fileID: 11400000, guid: f05336631ee710145b23c24f2a5ca307, type: 2}
+  - {fileID: 11400000, guid: 3f14dbddf804f344681d36d87b46fb16, type: 2}
+  - {fileID: 11400000, guid: f2a985afbb6cfc74782da384ae24466d, type: 2}
+  - {fileID: 11400000, guid: 35151bfe9e69f9b49a10a8e8593b437f, type: 2}
+  - {fileID: 11400000, guid: 0a171f0aa12a1754dac9528a1704a3fc, type: 2}
+  - {fileID: 11400000, guid: ea80e66f7d8aa1343a4b5dd855943925, type: 2}
+  otherUpgrades: []

@@ -171,5 +171,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea587cd3c686e294e94e150aa7ec1147, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 20
+  baseSpeed: 20
   lifeTime: 2
+  magmaPoolPrefab: {fileID: 8970084439038071045, guid: b3102f3658e8e1f4e80b637557ade492, type: 3}

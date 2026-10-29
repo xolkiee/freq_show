@@ -75,10 +75,11 @@ public class EnemyAI : MonoBehaviour
             rb.velocity = Vector2.zero;
         }
     }
-    public void ApplyKnockback(Vector2 force, float duration)
+   public void ApplyKnockback(Vector2 force, float duration)
     {
         knockbackTimer = duration;
-        rb.velocity = Vector2.zero; // O anki yürüme hızını sıfırla ki itme net hissedilsin
-        rb.AddForce(force, ForceMode2D.Impulse);
+        // AddForce yerine doğrudan hızı (velocity) geriye doğru eşitliyoruz
+        // Bu sayede düşmanın kütlesi ne olursa olsun kesin olarak fırlayacak!
+        rb.velocity = force; 
     }
 }

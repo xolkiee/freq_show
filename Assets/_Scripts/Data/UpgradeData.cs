@@ -1,8 +1,9 @@
 using UnityEngine;
 
 public enum UpgradeGroup { Bullet1, Bullet2, Dash, Other }
-public enum UpgradeID { // Hızlı Karakter (Agile)
-    PiercingBullet, RicochetBullet, FireDash, CuttingWind, MoveSpeed, FireRate, 
+public enum UpgradeID { 
+    // Hızlı Karakter (Agile)
+    PiercingBullet, RicochetBullet, FireDash, CuttingWind, MoveSpeed, FireRate, LightningArc, ToxicCloud,
     
     // Güçlü Karakter (Heavy)
     Shrapnel, Cannonball, MagmaPool, SeismicShock, GroundSmash, Shield, BulletSize, DamageIncrease,

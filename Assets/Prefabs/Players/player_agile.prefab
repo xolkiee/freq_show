@@ -20,6 +20,10 @@ PrefabInstance:
       propertyPath: fireTrailPrefab
       value: 
       objectReference: {fileID: 2195425509710279918, guid: 18e24cb7fda1c6c4ebd247e4099b1c4c, type: 3}
+    - target: {fileID: 5140913230528560775, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
+      propertyPath: cuttingWindPrefab
+      value: 
+      objectReference: {fileID: 5340801738856014970, guid: a22d9dd1a6006364b95784d3e48c7391, type: 3}
     - target: {fileID: 5548051642580172227, guid: 67575f88c2eec134f89dec57f9c3bade, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -109,3 +113,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3484e3a8208183f4e94204663ee92d90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  availableUpgrades:
+  - {fileID: 11400000, guid: 000cb6ef5b3f95f409179e9151375782, type: 2}
+  - {fileID: 11400000, guid: 3236d2069a663444aa37dc688818a4e6, type: 2}
+  - {fileID: 11400000, guid: d13690c7e99bbfc468415f37960f4740, type: 2}
+  - {fileID: 11400000, guid: cd82b596cab32114fbc0711704959e98, type: 2}
+  - {fileID: 11400000, guid: 711f9130ae5009a47bd78deae3521285, type: 2}
+  - {fileID: 11400000, guid: 132fb56670422dc4084fa802973e1b52, type: 2}
+  - {fileID: 11400000, guid: 16c433db77bdf224e8d58df145b4368d, type: 2}
+  - {fileID: 11400000, guid: ea80e66f7d8aa1343a4b5dd855943925, type: 2}
+  otherUpgrades: []

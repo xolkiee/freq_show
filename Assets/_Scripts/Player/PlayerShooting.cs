@@ -18,6 +18,10 @@ public class PlayerShooting : MonoBehaviour
     private PlayerUpgradeManager upgradeManager; // YENİ EKLENDİ
     private bool isShooting;
 
+    [Header("Pasif Statlar")]
+    public int extraDamage = 0;
+    public float bulletSizeMultiplier = 1f; // 1f = Standart %100 boyut
+
     void Start()
     {
         playerController = GetComponent<PlayerController>();
@@ -64,11 +68,12 @@ public class PlayerShooting : MonoBehaviour
             int ricochetCount = (int)upgradeManager.GetUpgradeValue(UpgradeID.RicochetBullet);
             int cannonballLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.Cannonball);
             int shrapnelLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.Shrapnel);
+            int magmaLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.MagmaPool);
 
             bullet.SetActive(true);
             
             // Mermiye tüm yetenek verilerini gönderiyoruz
-            bullet.GetComponent<Bullet>().Fire(fireDirection, pierceCount, ricochetCount, cannonballLevel, shrapnelLevel);
+           bullet.GetComponent<Bullet>().Fire(fireDirection, pierceCount, ricochetCount, cannonballLevel, shrapnelLevel, magmaLevel, false, extraDamage, bulletSizeMultiplier);
         }
     }
 

@@ -3,7 +3,8 @@ guid: ea587cd3c686e294e94e150aa7ec1147
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - magmaPoolPrefab: {fileID: 8970084439038071045, guid: b3102f3658e8e1f4e80b637557ade492, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem; // Yeni Input Sistemi kütüphanesi
 
@@ -21,6 +22,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Yetenek (Upgrade) Ayarları")]
     public GameObject fireTrailPrefab; // Yere bırakılacak ateşin prefabı
+    public GameObject cuttingWindPrefab;
     private PlayerUpgradeManager upgradeManager; // Karakterin hafızası
 
     [Header("Bileşenler")]
@@ -117,14 +119,27 @@ public class PlayerController : MonoBehaviour
 
         // --- I-FRAME BAŞLANGICI: Karakteri mermilerin içinden geçeceği hayalet katmana al ---
         gameObject.layer = LayerMask.NameToLayer("PlayerDodge");
-
-        // Karakteri mevcut yönünde anlık olarak çok yüksek bir hıza ulaştırır
+        
+        // Dash yönü belirleme
+        Vector2 dashDir;
         if (moveInput != Vector2.zero)
-            rb.velocity = moveInput.normalized * dashSpeed;
+            dashDir = moveInput.normalized;
         else
-            rb.velocity = transform.up * dashSpeed; // Durduğu yerde basarsa baktığı yöne atılır
+            dashDir = transform.up;
+
+        rb.velocity = dashDir * dashSpeed;
+
+        
+        // KALKAN KONTROLÜ
+        int shieldLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.Shield);
+        if (shieldLevel > 0)
+        {
+            Debug.Log("Kalkan Koruması Aktif!");
+        }
 
         //  DASH SIRASINDA YERE ATEŞ BIRAKMA DÖNGÜSÜ
+        int cuttingWindLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.CuttingWind);
+        HashSet<EnemyHealth> damagedEnemies = new HashSet<EnemyHealth>(); // Aynı düşmana 60 kere hasar vurmayı önler
         // Hafızadan FireDash yeteneğinin değerini çekiyoruz. (Yoksa 0 döner).
         float fireDashLifeTime = upgradeManager.GetUpgradeValue(UpgradeID.FireDash);
         
@@ -145,15 +160,92 @@ public class PlayerController : MonoBehaviour
                 
                 nextFireSpawnTime += fireSpawnInterval;
             }
-
+            if (cuttingWindLevel > 0)
+            {
+                // Karakterin etrafındaki 1 birimlik yarıçapı tara (İçinden geçtiğimiz düşmanlar)
+                Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 1f);
+                foreach (Collider2D hit in hits)
+                {
+                    if (hit.CompareTag("Enemy"))
+                    {
+                        EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
+                        // Eğer düşman varsa ve bu dash sırasında henüz hasar almadıysa
+                        if (enemy != null && !damagedEnemies.Contains(enemy))
+                        {
+                            enemy.TakeDamage(cuttingWindLevel * 5); // Dash hasarı
+                            damagedEnemies.Add(enemy); // Listeye ekle ki bir daha vurmasın
+                            Debug.Log($"<color=cyan>KESİCİ RÜZGAR: {hit.gameObject.name} içinden geçildi ve kesildi!</color>");
+                        }
+                    }
+                }
+            }
             timePassed += Time.deltaTime;
             yield return null; // Bir sonraki frame'i bekle
         }
-        // ========================================================
+
+        // YERE VURMA (GROUND SMASH) KONTROLÜ
+        int smashLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.GroundSmash);
+        if (smashLevel > 0)
+        {
+            PerformGroundSmash(smashLevel);
+        }
 
         // --- I-FRAME BİTİŞİ: Karakteri orijinal (vurulabilir) katmanına geri döndür ---
         gameObject.layer = originalLayer;
 
         isDashing = false; // Kilitleri aç
+    }
+    // Dash bittiğinde alandaki düşmanlara vurur ve savurur
+    private void PerformGroundSmash(int smashLevel)
+    {
+        float radius = 2.5f + (smashLevel * 0.5f);
+        int smashDamage = smashLevel * 2; 
+
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, radius);
+
+        foreach (Collider2D col in hitEnemies)
+        {
+            if (col.CompareTag("Enemy"))
+            {
+                EnemyHealth health = col.GetComponent<EnemyHealth>();
+                if (health != null) health.TakeDamage(smashDamage);
+
+                EnemyAI enemyAI = col.GetComponent<EnemyAI>();
+                if (enemyAI != null)
+                {
+                    Vector2 pushDirection = (col.transform.position - transform.position).normalized;
+                    // Düşmanı geriye savurma hızını veriyoruz
+                    enemyAI.ApplyKnockback(pushDirection * 15f, 0.25f);
+                }
+            }
+        }
+        Debug.Log($"Yere Vurma Gerçekleşti! Seviye: {smashLevel}");
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        // Sadece Dash atarken ve Kalkan yeteneği varsa çalışır
+        if (isDashing && upgradeManager != null)
+        {
+            int shieldLevel = (int)upgradeManager.GetUpgradeValue(UpgradeID.Shield);
+
+            if (shieldLevel > 0)
+            {
+                // Düşman mermisine çarparsa mermiyi sil
+                if (collision.CompareTag("EnemyBullet"))
+                {
+                    Destroy(collision.gameObject);
+                }
+                // Düşmana çarparsa düşmanı fırlat
+                else if (collision.CompareTag("Enemy"))
+                {
+                    EnemyAI enemyAI = collision.GetComponent<EnemyAI>();
+                    if (enemyAI != null)
+                    {
+                        Vector2 pushDir = (collision.transform.position - transform.position).normalized;
+                        enemyAI.ApplyKnockback(pushDir * 15f, 0.2f);
+                    }
+                }
+            }
+        }
     }
 }

@@ -11,29 +11,37 @@ public class Bullet : MonoBehaviour
     private int currentRicochetCount;
     private int currentCannonballLevel;
     private int currentShrapnelLevel;
+    private int currentExtraDamage;
+    private float currentSizeMultiplier = 1f;
+    private int currentMagmaLevel;
+    public GameObject magmaPoolPrefab;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
     }
 
-    public void Fire(Vector2 direction, int pierceCount, int ricochetCount, int cannonLevel, int shrapnelLevel, bool isShrapnel = false)
+    public void Fire(Vector2 direction, int pierceCount, int ricochetCount, int cannonLevel, int shrapnelLevel,int magmaLevel, bool isShrapnel = false, int extraDamage = 0, float sizeMultiplier = 1f)
     {
         currentPierceCount = pierceCount; 
         currentRicochetCount = ricochetCount; 
         currentCannonballLevel = cannonLevel;
         currentShrapnelLevel = shrapnelLevel;
+        currentMagmaLevel = magmaLevel;
+        currentExtraDamage = extraDamage;
+        currentSizeMultiplier = sizeMultiplier;
         
         float actualSpeed = currentCannonballLevel > 0 ? baseSpeed * 0.5f : baseSpeed;
         
-        // ÇÖZÜM: Eğer bu bir şarapnelse boyutunu ufak tut, değilse gülle/normal mermi kuralını uygula
+        // Mermi boyutunu çarpanla hesaplıyoruz
         if (isShrapnel)
         {
-            transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            transform.localScale = new Vector3(0.5f, 0.5f, 1f) * currentSizeMultiplier;
         }
         else
         {
-            transform.localScale = currentCannonballLevel > 0 ? new Vector3(1.5f, 1.5f, 1f) : new Vector3(1f, 1f, 1f);
+            Vector3 baseScale = currentCannonballLevel > 0 ? new Vector3(1.5f, 1.5f, 1f) : new Vector3(1f, 1f, 1f);
+            transform.localScale = baseScale * currentSizeMultiplier;
         }
 
         rb.velocity = direction * actualSpeed;
@@ -41,7 +49,6 @@ public class Bullet : MonoBehaviour
         
         Invoke("Deactivate", lifeTime); 
     }
-
     void Deactivate()
     {
         gameObject.SetActive(false); 
@@ -56,20 +63,31 @@ public class Bullet : MonoBehaviour
             {
                 // Gülle ekstra hasar verebilir (örneğin seviye başına +1 hasar)
                 int damage = currentCannonballLevel > 0 ? 1 + currentCannonballLevel : 1;
-                enemy.TakeDamage(damage); 
+                int totalDamage = damage + currentExtraDamage;
+                enemy.TakeDamage(totalDamage); 
+            }
+                // YILDIRIM ARKI KONTROLÜ
+            PlayerUpgradeManager um = FindObjectOfType<PlayerUpgradeManager>();
+            if (um != null)
+            {
+                int arcLevel = (int)um.GetUpgradeValue(UpgradeID.LightningArc);
+                if (arcLevel > 0)
+                {
+                    TriggerLightningArc(hitInfo.transform, arcLevel);
+                }
             }
 
-           // GÜLLE İTME (KNOCKBACK) MANTIĞI
+          // GÜLLE İTME (KNOCKBACK) MANTIĞI
             if (currentCannonballLevel > 0)
             {
                 EnemyAI enemyAI = hitInfo.GetComponent<EnemyAI>();
                 if (enemyAI != null)
                 {
-                    // İtme yönü ve gücünü ayarla (20f genelde iyi bir değerdir, test edip değiştirebilirsin)
-                    Vector2 knockbackForce = rb.velocity.normalized * (currentCannonballLevel * 20f);
+                    // Artık kuvvet değil, doğrudan geriye fırlama HIZI (Velocity) veriyoruz.
+                    // 15f çok tok bir itme hissi verir, istersen artırıp azaltabilirsin.
+                    Vector2 knockbackVelocity = rb.velocity.normalized * (currentCannonballLevel * 10f);
                     
-                    // Düşmanı 0.2 saniye boyunca yürümekten alıkoy ve savur
-                    enemyAI.ApplyKnockback(knockbackForce, 0.2f); 
+                    enemyAI.ApplyKnockback(knockbackVelocity, 0.2f); 
                 }
             }
             
@@ -84,6 +102,12 @@ public class Bullet : MonoBehaviour
     // Merminin çarpma sonrası karar mekanizması
     void ProcessImpact(Vector3 impactPosition)
     {
+        if (currentMagmaLevel > 0 && magmaPoolPrefab != null)
+        {
+            GameObject pool = Instantiate(magmaPoolPrefab, impactPosition, Quaternion.identity);
+            pool.GetComponent<MagmaPool>().Setup(currentMagmaLevel, 3f + currentMagmaLevel); 
+            Debug.Log($"Magma Test -> Seviye: {currentMagmaLevel}, Prefab Var mı?: {magmaPoolPrefab != null}");
+        } 
         if (currentPierceCount > 0)
         {
             currentPierceCount--; 
@@ -121,7 +145,7 @@ public class Bullet : MonoBehaviour
             
             shrapnel.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
             shrapnel.GetComponent<Bullet>().baseSpeed = baseSpeed * 0.8f; 
-            shrapnel.GetComponent<Bullet>().Fire(dir, 0, 0, 0, 0, true); 
+            shrapnel.GetComponent<Bullet>().Fire(dir, 0, 0, 0, 0, 0, true); 
         }
     }
 
@@ -157,6 +181,34 @@ public class Bullet : MonoBehaviour
         {
             if (currentShrapnelLevel > 0) ExplodeIntoShrapnel();
             Deactivate();
+        }
+    }
+    void TriggerLightningArc(Transform hitEnemyTransform, int arcLevel)
+    {
+        float chainRadius = 4f + arcLevel; // Sıçrama mesafesi
+        int maxChainTargets = arcLevel * 2; // Kaç düşmana sıçrayacağı
+        int arcDamage = arcLevel;
+
+        Collider2D[] nearbyEnemies = Physics2D.OverlapCircleAll(hitEnemyTransform.position, chainRadius);
+        int chainedCount = 0;
+
+        foreach (Collider2D col in nearbyEnemies)
+        {
+            if (chainedCount >= maxChainTargets) break;
+
+            if (col.CompareTag("Enemy") && col.transform != hitEnemyTransform)
+            {
+                EnemyHealth enemy = col.GetComponent<EnemyHealth>();
+                if (enemy != null)
+                {
+                    enemy.TakeDamage(arcDamage);
+                    chainedCount++;
+
+                Debug.Log($"<color=yellow>ŞİMŞEK ARKI: Elektrik {hitEnemyTransform.name} üzerinden {col.gameObject.name} isimli düşmana sıçradı!</color>");
+                // Geçici görsel geri bildirim (Sarı çizgi ile elektrik sıçrama efekti)
+                Debug.DrawLine(hitEnemyTransform.position, col.transform.position, Color.yellow, 0.25f);
+                }
+            }
         }
     }
 
