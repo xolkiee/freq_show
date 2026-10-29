@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b66f31fcfb224b4c83a44424a704318, type: 3}
   m_Name: SeismicShock
   m_EditorClassIdentifier: 
-  upgradeName: 
+  upgradeName: Seismic Shock
   description: 
   group: 1
-  id: 9
+  id: 11
   baseValue: 0
   valuePerLevel: 0
   maxLevel: 3

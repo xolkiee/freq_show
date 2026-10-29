@@ -525,7 +525,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 1
+          m_IntArgument: 2
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -658,7 +658,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 1
+          m_IntArgument: 2
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -1017,7 +1017,7 @@ GameObject:
   - component: {fileID: 390477531}
   - component: {fileID: 390477530}
   m_Layer: 5
-  m_Name: "h\u0131z"
+  m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1205,10 +1205,6 @@ MonoBehaviour:
   - {fileID: 1337122363}
   - {fileID: 801689845}
   - {fileID: 1021370375}
-  testUpgrades:
-  - {fileID: 11400000, guid: cd82b596cab32114fbc0711704959e98, type: 2}
-  - {fileID: 11400000, guid: 000cb6ef5b3f95f409179e9151375782, type: 2}
-  - {fileID: 11400000, guid: f2a985afbb6cfc74782da384ae24466d, type: 2}
 --- !u!114 &391892471
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1285,7 +1281,7 @@ GameObject:
   - component: {fileID: 396767077}
   - component: {fileID: 396767076}
   m_Layer: 5
-  m_Name: "at\u0131\u015F"
+  m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1456,7 +1452,7 @@ GameObject:
   - component: {fileID: 484949268}
   - component: {fileID: 484949267}
   m_Layer: 5
-  m_Name: Can
+  m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1666,7 +1662,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 2
+          m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -3369,7 +3365,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 2
+          m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -3502,7 +3498,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 1
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -5117,7 +5113,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 1
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
