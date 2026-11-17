@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems; // YENÝ: EventSystem ile etkileþim için gerekli kütüphane
 
 public class GameManager : MonoBehaviour
 {
@@ -12,6 +13,10 @@ public class GameManager : MonoBehaviour
 
     [Header("UI Panelleri")]
     public GameObject gameOverUI; // Game Over ekraný paneli
+
+    // YENÝ: Gamepad'in kilitleneceði Yeniden Baþlat butonu
+    [Tooltip("GameOver panelindeki 'Yeniden Baþlat' butonunun GameObject'ini buraya sürükleyin")]
+    public GameObject restartButtonObj;
 
     void Awake()
     {
@@ -64,6 +69,14 @@ public class GameManager : MonoBehaviour
                     GameObject foundPanel = GameObject.Find("GameOverPanel");
                     if (foundPanel != null) foundPanel.SetActive(true);
                     else Debug.LogError(">>> HATA: Sahnede 'GameOverPanel' adýnda bir nesne bulunamadý!");
+                }
+
+                // YENÝ: Gamepad odaðýný Yeniden Baþlat butonuna kilitle
+                if (restartButtonObj != null)
+                {
+                    // Önceki seçimi temizle ki yeni seçimi zorla alabilsin
+                    EventSystem.current.SetSelectedGameObject(null);
+                    EventSystem.current.SetSelectedGameObject(restartButtonObj);
                 }
                 break;
         }

@@ -4,8 +4,10 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class DynamicCamera : MonoBehaviour
 {
+    // Singleton yapýsý (Teleport veya dýþarýdan kolayca çaðýrmak için)
+    public static DynamicCamera Instance;
+
     [Header("Takip Edilecek Hedefler")]
-    // Artýk bu listeyi Inspector'dan doldurmana gerek yok, kod kendi bulacak
     public List<Transform> targets = new List<Transform>();
 
     [Header("Kamera Hareket Ayarlarý")]
@@ -14,37 +16,39 @@ public class DynamicCamera : MonoBehaviour
     private Vector3 velocity;
 
     [Header("Zoom (Orthographic Size) Ayarlarý")]
-    public float minZoom = 7f;  // Tek oyunculuda veya yan yanayken ne kadar yakýnlaþsýn
-    public float maxZoom = 9f;  // CO-OP ÝÇÝN KESÝN SINIR: En fazla ne kadar uzaklaþsýn
-    public float zoomLimiter = 12f; // Karakterler ne kadar uzaklaþýnca maxZoom devreye girsin
+    public float minZoom = 7f;
+    public float maxZoom = 9f;
+    public float zoomLimiter = 12f;
 
-    [Header("Harita Sýnýrlarý (Dýþarýyý Göstermemek Ýçin)")]
+    [Header("Harita Sýnýrlarý (BoxCollider2D)")]
     public bool enableBounds = true;
-    public Vector2 minBounds = new Vector2(-32f, -32f);
-    public Vector2 maxBounds = new Vector2(32f, 32f);
+    [Tooltip("Kameranýn þu an içinde bulunduðu odanýn sýnýr collider'ý")]
+    public BoxCollider2D currentBounds;
 
     [Header("Kamera Sýnýrlarý")]
     public float screenPadding = 0.5f;
 
     private Camera cam;
 
+    void Awake()
+    {
+        // Singleton atamasý
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+
     void Start()
     {
         cam = GetComponent<Camera>();
 
-        // Oyun baþladýðýnda sahnede hazýr oyuncu varsa listeye ekle
         FindAllPlayers();
 
         if (targets.Count > 0)
         {
-            Vector3 center = GetCenterPoint();
-            transform.position = new Vector3(center.x, center.y, offset.z);
+            SnapToMidpoint(); // Oyun baþlar baþlamaz kamerayý anýnda hedefe oturt
         }
     }
 
-    // --- YENÝ EKLENEN RADAR SÝSTEMÝ ---
-    // Bu fonksiyonu her yarým saniyede bir veya oyuncu doðduðunda çaðýrabiliriz
-    // Þu an için performans dostu olmasý adýna saniyede 2 kez (0.5s) taratýyoruz.
     void OnEnable()
     {
         InvokeRepeating(nameof(FindAllPlayers), 0f, 0.5f);
@@ -57,12 +61,9 @@ public class DynamicCamera : MonoBehaviour
 
     void FindAllPlayers()
     {
-        // Sahnede "Player" etiketine (Tag) sahip tüm objeleri bul
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        targets.Clear();
 
-        targets.Clear(); // Listeyi temizle
-
-        // Bulunan oyuncularý takibe al (eðer aktiflerse)
         foreach (GameObject p in players)
         {
             if (p.activeInHierarchy)
@@ -71,7 +72,29 @@ public class DynamicCamera : MonoBehaviour
             }
         }
     }
-    // -----------------------------------
+
+    // --- YENÝ: SINIRLARI GÜNCELLEME METODU ---
+    public void SetNewBounds(BoxCollider2D newBounds)
+    {
+        currentBounds = newBounds;
+    }
+
+    // --- YENÝ: KAMERAYI ANINDA IÞINLAMA METODU ---
+    // Portal'dan geçildiðinde kameranýn kayarak gitmemesi için çaðrýlacak
+    public void SnapToMidpoint()
+    {
+        if (targets.Count == 0) return;
+
+        Vector3 centerPoint = GetCenterPoint();
+        Vector3 newPosition = centerPoint + offset;
+
+        if (enableBounds && currentBounds != null)
+        {
+            newPosition = ClampPositionToBounds(newPosition);
+        }
+
+        transform.position = newPosition;
+    }
 
     void LateUpdate()
     {
@@ -87,29 +110,48 @@ public class DynamicCamera : MonoBehaviour
         Vector3 centerPoint = GetCenterPoint();
         Vector3 newPosition = centerPoint + offset;
 
-        if (enableBounds)
+        if (enableBounds && currentBounds != null)
         {
-            float camHeight = cam.orthographicSize;
-            float camWidth = cam.orthographicSize * cam.aspect;
-
-            float clampedX = Mathf.Clamp(newPosition.x, minBounds.x + camWidth, maxBounds.x - camWidth);
-            float clampedY = Mathf.Clamp(newPosition.y, minBounds.y + camHeight, maxBounds.y - camHeight);
-
-            newPosition = new Vector3(clampedX, clampedY, offset.z);
+            newPosition = ClampPositionToBounds(newPosition);
         }
 
         transform.position = Vector3.SmoothDamp(transform.position, newPosition, ref velocity, smoothTime);
     }
 
+    // Pozisyonu collider sýnýrlarýna göre kýsýtlayan yardýmcý fonksiyon
+    Vector3 ClampPositionToBounds(Vector3 targetPos)
+    {
+        float camHeight = cam.orthographicSize;
+        float camWidth = camHeight * cam.aspect;
+
+        float minX = currentBounds.bounds.min.x + camWidth;
+        float maxX = currentBounds.bounds.max.x - camWidth;
+        float minY = currentBounds.bounds.min.y + camHeight;
+        float maxY = currentBounds.bounds.max.y - camHeight;
+
+        // Oda çok küçükse (kamera odadan büyükse) kamerayý odanýn merkezine kilitle
+        if (maxX < minX)
+        {
+            minX = currentBounds.bounds.center.x;
+            maxX = currentBounds.bounds.center.x;
+        }
+        if (maxY < minY)
+        {
+            minY = currentBounds.bounds.center.y;
+            maxY = currentBounds.bounds.center.y;
+        }
+
+        float clampedX = Mathf.Clamp(targetPos.x, minX, maxX);
+        float clampedY = Mathf.Clamp(targetPos.y, minY, maxY);
+
+        return new Vector3(clampedX, clampedY, offset.z);
+    }
+
     void Zoom()
     {
         float greatestDistance = GetGreatestDistance();
-
-        // Tek oyuncu varsa zoom'u minZoom'da tut, yoksa mesafeye göre hesapla
         float targetZoom = (targets.Count == 1) ? minZoom : Mathf.Lerp(minZoom, maxZoom, greatestDistance / zoomLimiter);
-
         targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
-
         cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetZoom, Time.deltaTime * 3f);
     }
 
